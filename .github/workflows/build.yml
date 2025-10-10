@@ -44,5 +44,5 @@ jobs:
       - name: Загрузка артефактов
         uses: actions/upload-artifact@v4
         with:
-          name: build-artifacts
-          path: build/
+          name: fetchfile.apk
+          path: build/apk/
