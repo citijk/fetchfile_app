@@ -1,0 +1,35 @@
+name: Build APK
+
+on:
+  push:
+    branches:
+      - main  # замените на вашу основную ветку
+
+jobs:
+  build_apk:
+    runs-on: ubuntu-latest
+    container:
+      image: instrumentisto/flutter:3.29.2
+
+    env:
+      CHROME_EXECUTABLE: /usr/bin/chromedriver
+      JAVA_HOME: /usr/lib/jvm/java-17-openjdk-amd64/
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Установка зависимостей
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y chromium-chromedriver python3-pip openjdk-17-jdk
+          yes | sdkmanager --licenses || true
+          pip install --no-cache-dir --break-system-packages "flet[all]"
+
+      - name: Сборка APK
+        run: flet build apk
+
+      - name: Загрузка артефактов
+        uses: actions/upload-artifact@v3
+        with:
+          name: build-artifacts
+          path: build/
