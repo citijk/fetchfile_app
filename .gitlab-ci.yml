@@ -1,0 +1,24 @@
+image: instrumentisto/flutter:3.29.2
+
+stages:
+  - build
+
+before_script:
+  - apt-get update
+  - apt-get install -y chromium-chromedriver python3-pip openjdk-17-jdk
+  - yes | sdkmanager --licenses || true
+  - pip install --no-cache-dir --break-system-packages "flet[all]"
+
+  - export CHROME_EXECUTABLE="/usr/bin/chromedriver"
+  - export JAVA_HOME="/usr/lib/jvm/java-17-openjdk-amd64/"
+
+build_apk:
+  stage: build
+  environment: production
+  script:
+    - flet build apk
+  artifacts:
+    paths:
+      - build/
+  rules:
+      - if: $CI_COMMIT_REF_NAME == $CI_DEFAULT_BRANCH
