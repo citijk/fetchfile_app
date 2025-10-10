@@ -14,12 +14,29 @@ jobs:
     env:
       CHROME_EXECUTABLE: /usr/bin/chromedriver
       JAVA_HOME: /usr/lib/jvm/java-17-openjdk-amd64/
+      ANDROID_HOME: /opt/android-sdk-linux
+      LANG: en_US.UTF-8
+      LC_ALL: en_US.UTF-8
+      LANGUAGE: en_US:en
+      ANDROID_SDK_ROOT: /opt/android-sdk-linux
+      PATH: /usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/opt/android-sdk-linux/cmdline-tools/latest/bin:/opt/android-sdk-linux/platform-tools:/opt/android-sdk-linux/emulator
+      ANDROID_SDK_TOOLS_VERSION: 11076708
+      ANDROID_PLATFORM_VERSION: 35
+      ANDROID_BUILD_TOOLS_VERSION: 35.0.0
+      FLUTTER_HOME: /usr/local/flutter
+      FLUTTER_VERSION: 3.29.2
+      PATH: /usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/opt/android-sdk-linux/cmdline-tools/latest/bin:/opt/android-sdk-linux/platform-tools:/opt/android-sdk-linux/emulator:/usr/local/flutter/bin:/usr/local/flutter/bin/cache/dart-sdk/bin
+      
+      
+      
+      
 
     steps:
       - uses: actions/checkout@v3
 
       - name: Установка зависимостей
         run: |
+          flutter --version
           sudo apt-get update
           sudo apt-get install -y chromium-chromedriver python3-pip openjdk-17-jdk
           yes | sdkmanager --licenses || true
