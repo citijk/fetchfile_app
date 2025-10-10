@@ -1,24 +1,38 @@
 image: instrumentisto/flutter:3.29.2
 
+variables:
+  CHROME_EXECUTABLE: /usr/bin/chromedriver
+  JAVA_HOME: /usr/lib/jvm/java-17-openjdk-amd64/
+  ANDROID_HOME: /opt/android-sdk-linux
+  LANG: en_US.UTF-8
+  LC_ALL: en_US.UTF-8
+  LANGUAGE: en_US:en
+  ANDROID_SDK_ROOT: /opt/android-sdk-linux
+  ANDROID_SDK_TOOLS_VERSION: 11076708
+  ANDROID_PLATFORM_VERSION: 35
+  ANDROID_BUILD_TOOLS_VERSION: 35.0.0
+  FLUTTER_HOME: /usr/local/flutter
+  FLUTTER_VERSION: 3.29.2
+  PATH: /usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/opt/android-sdk-linux/cmdline-tools/latest/bin:/opt/android-sdk-linux/platform-tools:/opt/android-sdk-linux/emulator:/usr/local/flutter/bin:/usr/local/flutter/bin/cache/dart-sdk/bin
+
 stages:
   - build
 
-before_script:
-  - apt-get update
-  - apt-get install -y chromium-chromedriver python3-pip openjdk-17-jdk
-  - yes | sdkmanager --licenses || true
-  - pip install --no-cache-dir --break-system-packages "flet[all]"
-
-  - export CHROME_EXECUTABLE="/usr/bin/chromedriver"
-  - export JAVA_HOME="/usr/lib/jvm/java-17-openjdk-amd64/"
-
 build_apk:
   stage: build
-  environment: production
   script:
+    - git config --global --add safe.directory /usr/local/flutter
+    - echo "ls /usr/lib/jvm/"
+    - ls /usr/lib/jvm/
+    - flutter --version
+    - apt-get update && apt-get install -y chromium-chromedriver python3-pip openjdk-17-jdk
+    - yes | sdkmanager --licenses || true
+    - pip3 install --no-cache-dir --break-system-packages "flet[all]"
+    - rm -rf build/apk/* || true
     - flet build apk
   artifacts:
     paths:
-      - build/
-  rules:
-      - if: $CI_COMMIT_REF_NAME == $CI_DEFAULT_BRANCH
+      - build/apk/
+    expire_in: 1 week
+  only:
+    - main

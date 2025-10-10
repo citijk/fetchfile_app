@@ -8,13 +8,13 @@ def main(page: ft.Page):
     page.vertical_alignment = ft.MainAxisAlignment.START
     page.padding = 20
 
-    url_field = ft.TextField(label="Введите URL видео", width=400, value="https://rutube.ru/video/11609795aeabe7398b154f0fdf0fadd3/")
-    progress_bar = ft.ProgressBar(width=400, visible=False)
+    url_field = ft.TextField(label="Введите URL видео", width=(page.width-200), value="https://rutube.ru/video/11609795aeabe7398b154f0fdf0fadd3/")
+    progress_bar = ft.ProgressBar(width=(page.width-200), visible=False)
     status = ft.Text("")
     download_button = ft.ElevatedButton("Скачать", disabled=False)
 
     # Переменная для хранения выбранного пути
-    download_dir = os.path.expanduser("~/Download")
+    FLET_APP_STORAGE_DATA = os.getenv("FLET_APP_STORAGE_DATA")
 
     def download_video(e):
         url = url_field.value.strip()
@@ -45,7 +45,7 @@ def main(page: ft.Page):
 
         def run_download():
             ydl_opts = {
-                'outtmpl': os.path.join(download_dir, '%(title)s.%(ext)s'),
+                'outtmpl': os.path.join(FLET_APP_STORAGE_DATA, '%(title)s.%(ext)s'),
                 'progress_hooks': [on_progress],
                 'noplaylist': True,
                 'quiet': True,
@@ -65,11 +65,11 @@ def main(page: ft.Page):
     download_button.on_click = download_video
 
     async def open_folder_picker():
-        nonlocal download_dir
+        nonlocal FLET_APP_STORAGE_DATA
         folder = await page.pick_directory()
         if folder:
-            download_dir = folder
-            status.value = f"Выбрана папка: {download_dir}"
+            FLET_APP_STORAGE_DATA = folder
+            status.value = f"Выбрана папка: {FLET_APP_STORAGE_DATA}"
         else:
             status.value = "Выбор папки отменён"
         page.update()
