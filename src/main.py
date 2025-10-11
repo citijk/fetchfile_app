@@ -8,13 +8,36 @@ def main(page: ft.Page):
     page.vertical_alignment = ft.MainAxisAlignment.START
     page.padding = 20
 
-    url_field = ft.TextField(label="Введите URL видео", width=(page.width-200), value="https://rutube.ru/video/11609795aeabe7398b154f0fdf0fadd3/")
-    progress_bar = ft.ProgressBar(width=(page.width-200), visible=False)
+    url_field = ft.TextField(label="Введите URL видео", width=(page.width-120), value="https://rutube.ru/video/11609795aeabe7398b154f0fdf0fadd3/")
+    progress_bar = ft.ProgressBar(width=(page.width-120), visible=False)
     status = ft.Text("")
     download_button = ft.ElevatedButton("Скачать", disabled=False)
+    select_folder_button = ft.ElevatedButton("Выбрать папку для сохранения")
 
-    # Переменная для хранения выбранного пути
-    FLET_APP_STORAGE_DATA = os.getenv("FLET_APP_STORAGE_DATA")
+    # Переменная для выбранной папки (по умолчанию домашняя директория)
+    save_folder = os.path.expanduser("~")
+
+    # Создаём FilePicker для выбора папки
+    file_picker = ft.FilePicker(on_result=None)
+
+    # Устанавливаем обработчик события выбора папки через метод get_directory_path
+    def on_result(e: ft.FilePickerResultEvent):
+        nonlocal save_folder
+        if e.path:
+            save_folder = e.path
+            status.value = f"Выбрана папка: {save_folder}"
+        else:
+            status.value = "Выбор папки отменён"
+        page.update()
+
+    file_picker.on_result = on_result
+    page.overlay.append(file_picker)
+
+    def open_folder_picker(e):
+        # Используем метод get_directory_path для вызова диалога выбора папки
+        file_picker.get_directory_path(dialog_title="Выберите папку для сохранения", initial_directory=save_folder)
+
+    select_folder_button.on_click = open_folder_picker
 
     def download_video(e):
         url = url_field.value.strip()
@@ -31,11 +54,11 @@ def main(page: ft.Page):
 
         def on_progress(d):
             if d['status'] == 'downloading':
-                total_bytes = d.get('total_bytes') or d.get('total_bytes_estimate') or 1
-                downloaded_bytes = d.get('downloaded_bytes', 0)
-                progress = downloaded_bytes / total_bytes if total_bytes else 0
+                total = d.get('total_bytes') or d.get('total_bytes_estimate') or 1
+                downloaded = d.get('downloaded_bytes', 0)
+                progress = downloaded / total if total else 0
                 progress_bar.value = progress
-                status.value = f"Скачано: {downloaded_bytes / 1024:.2f} KB / {total_bytes / 1024:.2f} KB"
+                status.value = f"Скачано: {downloaded / 1024:.2f} KB / {total / 1024:.2f} KB"
                 page.update()
             elif d['status'] == 'finished':
                 progress_bar.value = 1.0
@@ -45,7 +68,7 @@ def main(page: ft.Page):
 
         def run_download():
             ydl_opts = {
-                'outtmpl': os.path.join(FLET_APP_STORAGE_DATA, '%(title)s.%(ext)s'),
+                'outtmpl': os.path.join(save_folder, '%(title)s.%(ext)s'),
                 'progress_hooks': [on_progress],
                 'noplaylist': True,
                 'quiet': True,
@@ -64,43 +87,19 @@ def main(page: ft.Page):
 
     download_button.on_click = download_video
 
-    async def open_folder_picker():
-        nonlocal FLET_APP_STORAGE_DATA
-        folder = await page.pick_directory()
-        if folder:
-            FLET_APP_STORAGE_DATA = folder
-            status.value = f"Выбрана папка: {FLET_APP_STORAGE_DATA}"
-        else:
-            status.value = "Выбор папки отменён"
-        page.update()
-
-    page.on_ready = lambda e: open_folder_picker()
-
-    form_row = ft.Column(
-        [
-            ft.Row(
-                [
-                    url_field,
-                    download_button
-                ],
-                alignment=ft.MainAxisAlignment.CENTER,  # По горизонтали по центру
-                vertical_alignment=ft.CrossAxisAlignment.CENTER,
-            ),
-            ft.Row(
-                [
-                    progress_bar,
-                    status,
-                ],
-                alignment=ft.MainAxisAlignment.CENTER,
-                vertical_alignment=ft.CrossAxisAlignment.CENTER,
-            )
-        ],
-        alignment=ft.MainAxisAlignment.CENTER,      # Центрирование колонки по вертикали на странице
-        horizontal_alignment=ft.CrossAxisAlignment.CENTER,  # Центрирование по горизонтали
-        expand=True  # Занять весь доступный экран для центрирования
+    page.add(
+        ft.Column(
+            [
+                ft.Row([url_field, download_button], alignment=ft.MainAxisAlignment.CENTER),
+                 ft.Row([select_folder_button], alignment=ft.MainAxisAlignment.CENTER),
+                ft.Row([progress_bar], alignment=ft.MainAxisAlignment.CENTER),
+                ft.Row([status], alignment=ft.MainAxisAlignment.CENTER),
+            ],
+            alignment=ft.MainAxisAlignment.CENTER,
+            horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+            expand=True,
+        )
     )
 
-    page.add(form_row)
-
 if __name__ == "__main__":
-    ft.app(target=main, assets_dir="assets", upload_dir=os.getenv("FLET_APP_STORAGE_DATA"))
+    ft.app(target=main)
