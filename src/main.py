@@ -259,21 +259,18 @@ def main(page: ft.Page):
 
 
     def Dialog(title,content,lista):
-
-        d=AlertDialog(
+        d=ft.AlertDialog(
             open=False,
-            title=Text(title),
-            content=Text(content),
+            title=ft.Text(title),
+            content=ft.Text(content),
             actions=lista,
-            bgcolor=ft.Colors.BG,
-            icon=Icon(ft.Icons.ERROR_OUTLINE, color=B),
+            icon=ft.Icon(ft.Icons.ERROR_OUTLINE),
             icon_padding=ft.padding.only(top=20, bottom=10),
             actions_alignment=ft.MainAxisAlignment.END
         )
-
         return d
 
-    dialog5 = Dialog("Exit.","Want to exit?",[ft.TextButton("No", on_click=lambda_:close_dialog(dialog5)),ft.TextButton("yes",on_click=lambda_: Destroy())])
+    dialog5 = Dialog("Exit.","Want to exit?",[ft.TextButton("No", on_click=lambda e:close_dialog(dialog5)),ft.TextButton("yes",on_click=lambda _: Destroy())])
     
     def BACK(): # For routing with "back" Android button
         global dialog5
