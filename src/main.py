@@ -182,8 +182,24 @@ def main(page: ft.Page):
 
 
 
+    page.bottom_appbar = ft.BottomAppBar(
+        content=ft.Row(
+            [
+                ft.IconButton(ft.Icons.MENU),
+                ft.Text("Global Bottom App Bar"),
+                ft.IconButton(ft.Icons.SEARCH),
+            ],
+            alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
+        ),
+        bgcolor=ft.Colors.BLUE_GREY_900,
+    )
 
-    def route_change(route):
+    page.add(
+        ft.Text("Content of the current view"),
+        ft.ElevatedButton("Go to another view", on_click=lambda _: page.go("/another")),
+    )
+
+    def route_change(route: ft.RouteChangeEvent):
         page.views.clear()
         if page.route == "/":
             def next_prev(e):
@@ -241,8 +257,43 @@ def main(page: ft.Page):
             )
         page.update()
 
+
+    def Dialog(title,content,lista):
+
+        d=AlertDialog(
+            open=False,
+            title=Text(title),
+            content=Text(content),
+            actions=lista,
+            bgcolor=ft.Colors.BG,
+            icon=Icon(ft.Icons.ERROR_OUTLINE, color=B),
+            icon_padding=ft.padding.only(top=20, bottom=10),
+            actions_alignment=ft.MainAxisAlignment.END
+        )
+
+        return d
+
+    dialog5 = Dialog("Exit.","Want to exit?",[ft.TextButton("No", on_click=lambda_:close_dialog(dialog5)),ft.TextButton("yes",on_click=lambda_: Destroy())])
+    
+    def BACK(): # For routing with "back" Android button
+        global dialog5
+        if page.views[-1].route == "/": # Open a exit dialog instead of exit directly (Destroy())
+            page.open(dialog5)
+        else: # Return to main page if you are not in there
+            #page.views.append(page_1_view())
+            page.go("/")
+
+    def Destroy():
+        page.window.destroy()
+
+    def close_dialog(d):
+        global dialog5
+        page.close(dialog5)
+
+    page.window.prevent_close = False
     page.on_route_change = route_change
-    page.go(page.route) # Go to the initial route
+    page.on_view_pop = lambda _: BACK()
+    page.go(page.route)
 
 
 #    form_row = ft.Column(
