@@ -5,18 +5,18 @@ description = ""
 readme = "README.md"
 requires-python = ">=3.9"
 authors = [
-    { name = "Flet developer", email = "you@example.com" }
+    { name = "FetchFile", email = "you@example.com" }
 ]
 dependencies = [
   "flet==0.28.3",
-  "yt-dlp"  # Добавляем yt-dlp в зависимости проекта
+  "yt-dlp"
 ]
 
 [tool.flet]
-org = "com.mycompany"
-product = "fetchfile"
+org = "com.fetchfile.me"
+product = "FetchFile"
 company = "FetchFile"
-copyright = "FetchFile (C) 2025 by Flet"
+copyright = "FetchFile (C) 2025"
 
 [tool.flet.app]
 path = "src"
@@ -34,4 +34,4 @@ webview_flutter_android = "4.10.1"
 
 [tool.poetry.group.dev.dependencies]
 flet = {extras = ["all"], version = "0.28.3"}
-yt-dlp = "*"  # Можно указать конкретную версию, например "2024.6.4"
+yt-dlp = "*"

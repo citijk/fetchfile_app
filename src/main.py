@@ -46,9 +46,7 @@ def main(page: ft.Page):
     config = load_config()
     save_folder = config.get("save_folder", os.path.expanduser("~"))
 
-
-    if config.get("save_folder"):
-        status.value = f"будет сохраненно в: {save_folder}"
+    status.value = f"будет сохраненно в: {save_folder}"
 
     def on_result(e: ft.FilePickerResultEvent):
         nonlocal save_folder
