@@ -18,7 +18,7 @@ def main(page: ft.Page):
     )
 
     url_field = ft.TextField(label="Введите URL видео", width=(page.width-120), value="https://rutube.ru/video/c5f09f19624cf5c0fca126ca7e635a69/")
-    info_text = ft.Text("")
+    info_text = ft.Text("", width=(page.width-120))
 
     image = ft.Image(
                 src=False,
@@ -169,16 +169,44 @@ def main(page: ft.Page):
     fetch_info_button.on_click = fetch_info
     download_button.on_click = download_video
 
+
+    form_row = ft.Column(
+        [
+            ft.Row(
+                [
+                    url_field,
+                    download_button
+                ],
+                alignment=ft.MainAxisAlignment.CENTER,  # По горизонтали по центру
+                vertical_alignment=ft.CrossAxisAlignment.CENTER,
+            ),
+            ft.Row(
+                [
+                    progress_bar,
+                ],
+                alignment=ft.MainAxisAlignment.CENTER,
+                vertical_alignment=ft.CrossAxisAlignment.CENTER,
+            ),
+            ft.Row(
+                [
+                    image,
+                    info_text,
+                ],
+                alignment=ft.MainAxisAlignment.CENTER,
+                vertical_alignment=ft.CrossAxisAlignment.CENTER,
+            ),
+            fetch_info_button,
+            status,
+            select_folder_button,
+        ],
+        alignment=ft.MainAxisAlignment.CENTER,      # Центрирование колонки по вертикали на странице
+        horizontal_alignment=ft.CrossAxisAlignment.CENTER,  # Центрирование по горизонтали
+        expand=True  # Занять весь доступный экран для центрирования
+    )
+
     page.add(
-        url_field,
-        fetch_info_button,
-        image,
-        info_text,
-        select_folder_button,
-        progress_bar,
-        status,
-        download_button,
+        form_row
     )
 
 if __name__ == "__main__":
-    ft.app(target=main)
+    ft.app(target=main, assets_dir="assets")

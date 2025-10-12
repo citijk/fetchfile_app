@@ -21,6 +21,10 @@ copyright = "FetchFile (C) 2025"
 [tool.flet.app]
 path = "src"
 
+[tool.flet.splash]
+android = false
+web = false
+
 [tool.uv]
 dev-dependencies = [
     "flet[all]==0.28.3",
