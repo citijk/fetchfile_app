@@ -5,6 +5,7 @@ import os
 import json
 from uuid import getnode as get_mac
 
+
 def main(page: ft.Page):
     page.title = "Видео загрузчик FetchFile"
     page.vertical_alignment = ft.MainAxisAlignment.START
@@ -16,6 +17,13 @@ def main(page: ft.Page):
         ],
         current_locale=ft.Locale("es", "VE")
     )
+    page.horizontal_alignment = ft.CrossAxisAlignment.CENTER
+    page.vertical_alignment = ft.MainAxisAlignment.CENTER
+
+
+
+
+
 
     url_field = ft.TextField(label="Введите URL видео", width=(page.width-120), value="https://rutube.ru/video/c5f09f19624cf5c0fca126ca7e635a69/")
     info_text = ft.Text("", width=(page.width-120))
@@ -65,7 +73,7 @@ def main(page: ft.Page):
     def open_folder_picker(e):
         file_picker.get_directory_path(dialog_title="Выберите папку для сохранения", initial_directory=save_folder)
 
-    select_folder_button.on_click = open_folder_picker
+    #select_folder_button.on_click = open_folder_picker
 
     def fetch_info(e):
         url = url_field.value.strip()
@@ -78,7 +86,7 @@ def main(page: ft.Page):
         info_text.value = "Получение информации..."
         download_button.disabled = True
         progress_bar.visible = False
-        status.value = ""
+        #status.value = ""
         page.update()
 
         def run_info():
@@ -167,46 +175,113 @@ def main(page: ft.Page):
         threading.Thread(target=run_download, daemon=True).start()
 
     fetch_info_button.on_click = fetch_info
-    download_button.on_click = download_video
+    #download_button.on_click = download_video
 
 
-    form_row = ft.Column(
-        [
-            ft.Row(
-                [
-                    url_field,
-                    download_button
-                ],
-                alignment=ft.MainAxisAlignment.CENTER,  # По горизонтали по центру
-                vertical_alignment=ft.CrossAxisAlignment.CENTER,
-            ),
-            ft.Row(
-                [
-                    progress_bar,
-                ],
-                alignment=ft.MainAxisAlignment.CENTER,
-                vertical_alignment=ft.CrossAxisAlignment.CENTER,
-            ),
-            ft.Row(
-                [
-                    image,
-                    info_text,
-                ],
-                alignment=ft.MainAxisAlignment.CENTER,
-                vertical_alignment=ft.CrossAxisAlignment.CENTER,
-            ),
-            fetch_info_button,
-            status,
-            select_folder_button,
-        ],
-        alignment=ft.MainAxisAlignment.CENTER,      # Центрирование колонки по вертикали на странице
-        horizontal_alignment=ft.CrossAxisAlignment.CENTER,  # Центрирование по горизонтали
-        expand=True  # Занять весь доступный экран для центрирования
-    )
 
-    page.add(
-        form_row
-    )
+
+
+
+
+    def route_change(route):
+        page.views.clear()
+        if page.route == "/":
+            def next_prev(e):
+                fetch_info(e)
+                page.go("/preview")
+            page.views.append(
+                ft.View(
+                    "/",
+                    [
+                    ft.AppBar(title=ft.Text("Home")),
+                    ft.Row([
+                        url_field,
+                        ft.ElevatedButton("Next", on_click=next_prev)
+                        ])
+                    ],
+                    horizontal_alignment=ft.CrossAxisAlignment.CENTER,  # Центрирование по горизонтали
+                    vertical_alignment = ft.MainAxisAlignment.CENTER,
+                )
+            )
+        elif page.route == "/preview":
+            def next_prev(e):
+                download_video(e)
+                page.go("/download")
+            download_button.on_click=next_prev
+            page.views.append(
+                ft.View(
+                    "/preview",
+                    [
+                        image,
+                        info_text,
+                        #ft.AppBar(title=ft.Text("About")),
+                        #ft.Text("This is the About Page!"),
+                        download_button,
+                        status,
+                        ft.ElevatedButton("Выбрать папку для сохранения", on_click = open_folder_picker),
+                    ],
+                    horizontal_alignment=ft.CrossAxisAlignment.CENTER,  # Центрирование по горизонтали
+                    vertical_alignment = ft.MainAxisAlignment.CENTER,
+                )
+            )
+        elif page.route == "/download":
+            def cancel(e):
+                page.go("/preview")
+
+            page.views.append(
+                ft.View(
+                    "/download",
+                    [
+                        progress_bar,
+                        ft.ElevatedButton("cancel", on_click=cancel),
+                    ],
+                    horizontal_alignment=ft.CrossAxisAlignment.CENTER,  # Центрирование по горизонтали
+                    vertical_alignment = ft.MainAxisAlignment.CENTER,
+                )
+            )
+        page.update()
+
+    page.on_route_change = route_change
+    page.go(page.route) # Go to the initial route
+
+
+#    form_row = ft.Column(
+#        [
+#            ft.Row(
+#                [
+#                    url_field,
+#                    download_button
+#                ],
+#                alignment=ft.MainAxisAlignment.CENTER,  # По горизонтали по центру
+#                vertical_alignment=ft.CrossAxisAlignment.CENTER,
+#            ),
+#            ft.Row(
+#                [
+#                    progress_bar,
+#                ],
+#                alignment=ft.MainAxisAlignment.CENTER,
+#                vertical_alignment=ft.CrossAxisAlignment.CENTER,
+#            ),
+#            ft.Row(
+#                [
+#                    image,
+#                    info_text,
+#                ],
+#                alignment=ft.MainAxisAlignment.CENTER,
+#                vertical_alignment=ft.CrossAxisAlignment.CENTER,
+#            ),
+#            fetch_info_button,
+#            status,
+#            select_folder_button,
+#        ],
+#        alignment=ft.MainAxisAlignment.CENTER,      # Центрирование колонки по вертикали на странице
+#        horizontal_alignment=ft.CrossAxisAlignment.CENTER,  # Центрирование по горизонтали
+#        expand=True  # Занять весь доступный экран для центрирования
+#    )
+#
+#    page.add(
+#        form_row
+#    )
 
 if __name__ == "__main__":
     ft.app(target=main, assets_dir="assets")
