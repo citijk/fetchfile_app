@@ -199,6 +199,20 @@ def main(page: ft.Page):
         ft.ElevatedButton("Go to another view", on_click=lambda _: page.go("/another")),
     )
 
+    def page_1_view():
+        return ft.View(
+            "/",
+            [
+            ft.AppBar(title=ft.Text("Home")),
+            ft.Row([
+                url_field,
+                ft.ElevatedButton("Next", on_click=next_prev)
+                ])
+            ],
+            horizontal_alignment=ft.CrossAxisAlignment.CENTER,  # Центрирование по горизонтали
+            vertical_alignment = ft.MainAxisAlignment.CENTER,
+        )
+
     def route_change(route: ft.RouteChangeEvent):
         page.views.clear()
         if page.route == "/":
@@ -206,18 +220,7 @@ def main(page: ft.Page):
                 fetch_info(e)
                 page.go("/preview")
             page.views.append(
-                ft.View(
-                    "/",
-                    [
-                    ft.AppBar(title=ft.Text("Home")),
-                    ft.Row([
-                        url_field,
-                        ft.ElevatedButton("Next", on_click=next_prev)
-                        ])
-                    ],
-                    horizontal_alignment=ft.CrossAxisAlignment.CENTER,  # Центрирование по горизонтали
-                    vertical_alignment = ft.MainAxisAlignment.CENTER,
-                )
+                page_1_view()
             )
         elif page.route == "/preview":
             def next_prev(e):
@@ -271,14 +274,14 @@ def main(page: ft.Page):
         return d
 
     dialog5 = Dialog("Exit.","Want to exit?",[ft.TextButton("No", on_click=lambda e:close_dialog(dialog5)),ft.TextButton("yes",on_click=lambda _: Destroy())])
-    
+
     def BACK(): # For routing with "back" Android button
         global dialog5
-        if page.views[-1].route == "/": # Open a exit dialog instead of exit directly (Destroy())
+        if page.views[-1].route == "/1": # Open a exit dialog instead of exit directly (Destroy())
             page.open(dialog5)
         else: # Return to main page if you are not in there
-            #page.views.append(page_1_view())
-            page.go("/")
+            page.views.append(page_1_view())
+
 
     def Destroy():
         page.window.destroy()
@@ -288,9 +291,10 @@ def main(page: ft.Page):
         page.close(dialog5)
 
     page.window.prevent_close = False
-    page.on_route_change = route_change
     page.on_view_pop = lambda _: BACK()
-    page.go(page.route)
+    page.views.clear()
+    page.views.append(page_1_view())
+    page.views.append(page_1_view()) #
 
 
 #    form_row = ft.Column(
