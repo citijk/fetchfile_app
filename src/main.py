@@ -277,10 +277,7 @@ def main(page: ft.Page):
 
     def BACK(): # For routing with "back" Android button
         global dialog5
-        if page.views[-1].route == "/1": # Open a exit dialog instead of exit directly (Destroy())
-            page.open(dialog5)
-        else: # Return to main page if you are not in there
-            page.views.append(page_1_view())
+        page.views.append(page_1_view())
 
 
     def Destroy():
