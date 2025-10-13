@@ -199,30 +199,27 @@ def main(page: ft.Page):
         ft.ElevatedButton("Go to another view", on_click=lambda _: page.go("/another")),
     )
 
-    def page_1_view():
-        return ft.View(
-            "/",
-            [
-            ft.AppBar(title=ft.Text("Home")),
-            ft.Row([
-                url_field,
-                ft.ElevatedButton("Next", on_click=next_prev)
-                ])
-            ],
-            horizontal_alignment=ft.CrossAxisAlignment.CENTER,  # Центрирование по горизонтали
-            vertical_alignment = ft.MainAxisAlignment.CENTER,
-        )
-
     def route_change(route: ft.RouteChangeEvent):
         page.views.clear()
-        if page.route == "/":
-            def next_prev(e):
-                fetch_info(e)
-                page.go("/preview")
-            page.views.append(
-                page_1_view()
+        def next_prev(e):
+            fetch_info(e)
+            page.go("/preview")
+
+        page.views.append(
+            ft.View(
+                "/",
+                [
+                    ft.AppBar(title=ft.Text("Home")),
+                    ft.Row([
+                    url_field,
+                    ft.ElevatedButton("Next", on_click=next_prev)
+                    ])
+                ],
+                horizontal_alignment=ft.CrossAxisAlignment.CENTER,  # Центрирование по горизонтали
+                vertical_alignment = ft.MainAxisAlignment.CENTER,
             )
-        elif page.route == "/preview":
+        )
+        if page.route == "/preview":
             def next_prev(e):
                 download_video(e)
                 page.go("/download")
@@ -261,38 +258,16 @@ def main(page: ft.Page):
         page.update()
 
 
-    def Dialog(title,content,lista):
-        d=ft.AlertDialog(
-            open=False,
-            title=ft.Text(title),
-            content=ft.Text(content),
-            actions=lista,
-            icon=ft.Icon(ft.Icons.ERROR_OUTLINE),
-            icon_padding=ft.padding.only(top=20, bottom=10),
-            actions_alignment=ft.MainAxisAlignment.END
-        )
-        return d
+    def view_pop(e):
+        top_view = page.views.pop()
+        if len(page.views) > 0:
+            top_view = page.views[-1]
+        page.go(top_view.route)
 
-    dialog5 = Dialog("Exit.","Want to exit?",[ft.TextButton("No", on_click=lambda e:close_dialog(dialog5)),ft.TextButton("yes",on_click=lambda _: Destroy())])
+    page.on_route_change = route_change
+    page.on_view_pop = view_pop
 
-    def BACK(): # For routing with "back" Android button
-        global dialog5
-        page.views.append(page_1_view())
-
-
-    def Destroy():
-        page.window.destroy()
-
-    def close_dialog(d):
-        global dialog5
-        page.close(dialog5)
-
-    page.window.prevent_close = False
-    page.on_view_pop = lambda _: BACK()
-    page.views.clear()
-    page.views.append(page_1_view())
-    page.views.append(page_1_view()) #
-
+    page.go(page.route)
 
 #    form_row = ft.Column(
 #        [
@@ -333,4 +308,4 @@ def main(page: ft.Page):
 #    )
 
 if __name__ == "__main__":
-    ft.app(target=main, assets_dir="assets")
+    ft.app(target=main, assets_dir="assets", view=ft.AppView.WEB_BROWSER)
