@@ -6,23 +6,123 @@ import json
 from uuid import getnode as get_mac
 
 
+
+
 def main(page: ft.Page):
+
+
     page.title = "Видео загрузчик FetchFile"
-    page.vertical_alignment = ft.MainAxisAlignment.START
     page.padding = 20
     page.locale_configuration = ft.LocaleConfiguration(
         supported_locales=[
+            ft.Locale("de", "DE"),
             ft.Locale("es", "VE"),
-            ft.Locale("en", "US")
+            ft.Locale("en", "US"),
+            ft.Locale("ru", "RU"),
         ],
-        current_locale=ft.Locale("es", "VE")
+        #current_locale=ft.Locale("es", "VE")
     )
-    page.horizontal_alignment = ft.CrossAxisAlignment.CENTER
-    page.vertical_alignment = ft.MainAxisAlignment.CENTER
+
+    #page.horizontal_alignment = ft.CrossAxisAlignment.CENTER
+    #page.vertical_alignment = ft.MainAxisAlignment.CENTER
+    #page.vertical_alignment = ft.MainAxisAlignment.START
+
+    #page.floating_action_button = ft.FloatingActionButton(
+    #    icon=ft.Icons.ADD, shape=ft.CircleBorder()
+    #)
+    #page.floating_action_button_location = ft.FloatingActionButtonLocation.CENTER_DOCKED
 
 
+    def handle_locale_change(e):
+        index = int(e.data)
+        if index == 0:
+            page.locale_configuration.current_locale = ft.Locale("de", "DE")
+        elif index == 1:
+            page.locale_configuration.current_locale = ft.Locale("es", "VE")
+        elif index == 2:
+            page.locale_configuration.current_locale = ft.Locale("en", "US")
+        elif index == 3:
+            page.locale_configuration.current_locale = ft.Locale("ru", "RU")
+        page.update()
+
+    def bs_dismissed(e):
+        page.add(ft.Text("Bottom sheet dismissed"))
+
+    bs = ft.BottomSheet(
+        ft.Container(
+            ft.Column(
+                [
+                    ft.Text("Select lang"),
+                    ft.CupertinoSlidingSegmentedButton(
+                            selected_index=0,
+                            thumb_color=ft.Colors.BLUE_400,
+                            on_change=handle_locale_change,
+                            controls=[ft.Text("German"), ft.Text("Spanish"), ft.Text("English"), ft.Text("Russian")],
+                    ),
+                    ft.ElevatedButton("Dismiss", on_click=lambda _: page.close(bs)),
+                ],
+                horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+                tight=True,
+            ),
+            padding=50,
+        ),
+        open=False,
+        on_dismiss=bs_dismissed,
+    )
+    page.overlay.append(bs)
 
 
+    def check_item_clicked(e):
+        e.control.checked = not e.control.checked
+        page.update()
+
+
+    appbar = ft.AppBar(
+        leading=ft.Icon(ft.Icons.DOWNLOAD),
+        leading_width=40,
+        title=ft.Text("FetchFile"),
+        center_title=False,
+        bgcolor=ft.Colors.SURFACE_CONTAINER_HIGHEST,
+        actions=[
+            ft.IconButton(ft.Icons.WB_SUNNY_OUTLINED),
+            ft.IconButton(ft.Icons.FILTER_3),
+            ft.ElevatedButton("en", on_click=lambda e: page.open(bs)),
+            ft.PopupMenuButton(
+                items=[
+                    ft.PopupMenuItem(text="Item 1"),
+                    ft.PopupMenuItem(),  # divider
+                    ft.PopupMenuItem(
+                        text="Checked item", checked=False, on_click=check_item_clicked
+                    ),
+                ]
+            ),
+        ],
+    )
+
+
+    bottom_appbar = ft.BottomAppBar(
+        content=ft.Row(
+            [
+                #ft.IconButton(ft.Icons.MENU),
+                ft.Text("fetchfile.me (c)"),
+                #ft.IconButton(ft.Icons.SEARCH),
+            ],
+            #alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
+            alignment=ft.MainAxisAlignment.CENTER,
+        ),
+        bgcolor=ft.Colors.BLUE_GREY_900,
+    )
+
+
+    class BaseView(ft.View):
+        def __init__(self, *a, **kw):
+            super().__init__(*a,
+                appbar = appbar,
+                bottom_appbar = bottom_appbar,
+                fullscreen_dialog = True,
+                vertical_alignment=ft.MainAxisAlignment.CENTER,
+                horizontal_alignment = ft.CrossAxisAlignment.CENTER,
+                **kw,)
 
 
     url_field = ft.TextField(label="Введите URL видео", width=(page.width-120), value="https://rutube.ru/video/c5f09f19624cf5c0fca126ca7e635a69/")
@@ -182,22 +282,7 @@ def main(page: ft.Page):
 
 
 
-    page.bottom_appbar = ft.BottomAppBar(
-        content=ft.Row(
-            [
-                ft.IconButton(ft.Icons.MENU),
-                ft.Text("Global Bottom App Bar"),
-                ft.IconButton(ft.Icons.SEARCH),
-            ],
-            alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
-        ),
-        bgcolor=ft.Colors.BLUE_GREY_900,
-    )
 
-    page.add(
-        ft.Text("Content of the current view"),
-        ft.ElevatedButton("Go to another view", on_click=lambda _: page.go("/another")),
-    )
 
     def route_change(route: ft.RouteChangeEvent):
         page.views.clear()
@@ -206,17 +291,14 @@ def main(page: ft.Page):
             page.go("/preview")
 
         page.views.append(
-            ft.View(
+            BaseView(
                 "/",
                 [
-                    ft.AppBar(title=ft.Text("Home")),
                     ft.Row([
-                    url_field,
-                    ft.ElevatedButton("Next", on_click=next_prev)
-                    ])
+                        url_field,
+                        ft.ElevatedButton("Next", on_click=next_prev)
+                    ]),
                 ],
-                horizontal_alignment=ft.CrossAxisAlignment.CENTER,  # Центрирование по горизонтали
-                vertical_alignment = ft.MainAxisAlignment.CENTER,
             )
         )
         if page.route == "/preview":
@@ -225,7 +307,7 @@ def main(page: ft.Page):
                 page.go("/download")
             download_button.on_click=next_prev
             page.views.append(
-                ft.View(
+                BaseView(
                     "/preview",
                     [
                         image,
@@ -236,8 +318,6 @@ def main(page: ft.Page):
                         status,
                         ft.ElevatedButton("Выбрать папку для сохранения", on_click = open_folder_picker),
                     ],
-                    horizontal_alignment=ft.CrossAxisAlignment.CENTER,  # Центрирование по горизонтали
-                    vertical_alignment = ft.MainAxisAlignment.CENTER,
                 )
             )
         elif page.route == "/download":
@@ -245,14 +325,12 @@ def main(page: ft.Page):
                 page.go("/preview")
 
             page.views.append(
-                ft.View(
+                BaseView(
                     "/download",
                     [
                         progress_bar,
                         ft.ElevatedButton("cancel", on_click=cancel),
                     ],
-                    horizontal_alignment=ft.CrossAxisAlignment.CENTER,  # Центрирование по горизонтали
-                    vertical_alignment = ft.MainAxisAlignment.CENTER,
                 )
             )
         page.update()
