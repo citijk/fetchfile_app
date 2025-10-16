@@ -4,12 +4,35 @@ import threading
 import os
 import json
 from uuid import getnode as get_mac
-
-
-
+from jnius import autoclass
 
 def main(page: ft.Page):
+#   https://github.com/Creative-Media-Group/flet-localisation/blob/main/flet_localisation/__init__.py
 
+    temp_dir = os.getenv("FLET_APP_STORAGE_TEMP")
+    data_dir = os.getenv("FLET_APP_STORAGE_DATA")
+
+    print(temp_dir, data_dir)
+
+    CONFIG_PATH = os.path.join(data_dir, "config.json")
+
+    def load_config():
+        if os.path.exists(CONFIG_PATH):
+            with open(CONFIG_PATH, "r") as f:
+                return json.load(f)
+        return {}
+
+    def save_config(config):
+        with open(CONFIG_PATH, "w") as f:
+            json.dump(config, f)
+    config = load_config()
+
+    locale = autoclass("java.util.Locale").getDefault()
+    #print(locale.getLanguage(), locale.getCountry())
+    if config.get("current_locale"):
+        current_locale = config["current_locale"]
+    else:
+        current_locale = (locale.getLanguage(), locale.getCountry())
 
     page.title = "Видео загрузчик FetchFile"
     page.padding = 20
@@ -20,7 +43,7 @@ def main(page: ft.Page):
             ft.Locale("en", "US"),
             ft.Locale("ru", "RU"),
         ],
-        #current_locale=ft.Locale("es", "VE")
+        current_locale=ft.Locale(*current_locale)
     )
 
     #page.horizontal_alignment = ft.CrossAxisAlignment.CENTER
@@ -37,12 +60,17 @@ def main(page: ft.Page):
         index = int(e.data)
         if index == 0:
             page.locale_configuration.current_locale = ft.Locale("de", "DE")
+            config["current_locale"] = ("de", "DE")
         elif index == 1:
             page.locale_configuration.current_locale = ft.Locale("es", "VE")
+            config["current_locale"] = ("es", "VE")
         elif index == 2:
             page.locale_configuration.current_locale = ft.Locale("en", "US")
+            config["current_locale"] = ("en", "US")
         elif index == 3:
             page.locale_configuration.current_locale = ft.Locale("ru", "RU")
+            config["current_locale"] = ("ru", "RU")
+        save_config(config)
         page.update()
 
     def bs_dismissed(e):
@@ -78,26 +106,33 @@ def main(page: ft.Page):
 
 
     appbar = ft.AppBar(
-        leading=ft.Icon(ft.Icons.DOWNLOAD),
-        leading_width=40,
-        title=ft.Text("FetchFile"),
-        center_title=False,
         bgcolor=ft.Colors.SURFACE_CONTAINER_HIGHEST,
         actions=[
-            ft.IconButton(ft.Icons.WB_SUNNY_OUTLINED),
-            ft.IconButton(ft.Icons.FILTER_3),
-            ft.ElevatedButton("en", on_click=lambda e: page.open(bs)),
-            ft.PopupMenuButton(
-                items=[
-                    ft.PopupMenuItem(text="Item 1"),
-                    ft.PopupMenuItem(),  # divider
-                    ft.PopupMenuItem(
-                        text="Checked item", checked=False, on_click=check_item_clicked
-                    ),
-                ]
-            ),
+            #ft.IconButton(ft.Icons.WB_SUNNY_OUTLINED),
+            #ft.IconButton(ft.Icons.FILTER_3),
+            ft.ElevatedButton(current_locale[1], on_click=lambda e: page.open(bs)),
+            #ft.PopupMenuButton(
+            #    items=[
+            #        ft.PopupMenuItem(text="Item 1"),
+            #        ft.PopupMenuItem(),  # divider
+            #        ft.PopupMenuItem(
+            #            text="Checked item", checked=False, on_click=check_item_clicked
+            #        ),
+            #    ]
+            #),
         ],
     )
+
+    if page.width > 400:
+        appbar.title = ft.Text("FetchFile")
+        appbar.center_title = False
+
+    appbar.leading = ft.Image(
+            src="/favicon.png",
+            width=32,  # Set desired width
+            fit=ft.ImageFit.NONE # Adjust how the image fits within the specified size
+        )
+    appbar.leading_width = 32
 
 
     bottom_appbar = ft.BottomAppBar(
@@ -125,7 +160,9 @@ def main(page: ft.Page):
                 **kw,)
 
 
-    url_field = ft.TextField(label="Введите URL видео", width=(page.width-120), value="https://rutube.ru/video/c5f09f19624cf5c0fca126ca7e635a69/")
+    url_field = ft.TextField(label="Введите URL видео", width=(page.width-120))
+    #url_field.value = "https://rutube.ru/video/c5f09f19624cf5c0fca126ca7e635a69/"
+
     info_text = ft.Text("", width=(page.width-120))
 
     image = ft.Image(
@@ -142,16 +179,6 @@ def main(page: ft.Page):
 
     file_picker = ft.FilePicker(on_result=None)
 
-    CONFIG_PATH = "config.json"
-    def load_config():
-        if os.path.exists(CONFIG_PATH):
-            with open(CONFIG_PATH, "r") as f:
-                return json.load(f)
-        return {}
-    def save_config(config):
-        with open(CONFIG_PATH, "w") as f:
-            json.dump(config, f)
-    config = load_config()
     save_folder = config.get("save_folder", os.path.expanduser("~"))
 
     status.value = f"будет сохраненно в: {save_folder}"

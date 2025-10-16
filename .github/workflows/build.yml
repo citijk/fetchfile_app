@@ -36,7 +36,7 @@ jobs:
           ls /usr/lib/jvm/
           flutter --version
           sudo apt-get update
-          sudo apt-get install -y chromium-chromedriver python3-pip openjdk-17-jdk zenity
+          sudo apt-get install -y chromium-chromedriver python3-pip openjdk-17-jdk zenity #python3-pyjnius
           yes | sdkmanager --licenses || true
           pip install --no-cache-dir --break-system-packages "flet[all]"
 

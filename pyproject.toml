@@ -9,7 +9,9 @@ authors = [
 ]
 dependencies = [
   "flet==0.28.3",
-  "yt-dlp"
+  "yt-dlp",
+  "pyjnius",
+  
 ]
 
 [tool.flet]
@@ -24,6 +26,11 @@ path = "src"
 [tool.flet.splash]
 android = false
 web = false
+
+#[tool.flet.android]
+#dependencies = [
+#    "pyjnius"
+#]
 
 [tool.uv]
 dev-dependencies = [
