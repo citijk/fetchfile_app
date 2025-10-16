@@ -56,6 +56,8 @@ def main(page: ft.Page):
     #page.floating_action_button_location = ft.FloatingActionButtonLocation.CENTER_DOCKED
 
 
+    locale_btn = ft.ElevatedButton(current_locale[1], on_click=lambda e: page.open(bs))
+
     def handle_locale_change(e):
         index = int(e.data)
         if index == 0:
@@ -70,6 +72,7 @@ def main(page: ft.Page):
         elif index == 3:
             page.locale_configuration.current_locale = ft.Locale("ru", "RU")
             config["current_locale"] = ("ru", "RU")
+        locale_btn.text = config["current_locale"][1]
         save_config(config)
         page.update()
 
@@ -110,7 +113,7 @@ def main(page: ft.Page):
         actions=[
             #ft.IconButton(ft.Icons.WB_SUNNY_OUTLINED),
             #ft.IconButton(ft.Icons.FILTER_3),
-            ft.ElevatedButton(current_locale[1], on_click=lambda e: page.open(bs)),
+            locale_btn,
             #ft.PopupMenuButton(
             #    items=[
             #        ft.PopupMenuItem(text="Item 1"),
