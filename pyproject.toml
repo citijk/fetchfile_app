@@ -7,6 +7,7 @@ requires-python = ">=3.9"
 authors = [
     { name = "FetchFile", email = "you@example.com" }
 ]
+
 dependencies = [
   "flet==0.28.3",
   "yt-dlp",
@@ -26,6 +27,15 @@ path = "src"
 [tool.flet.splash]
 android = false
 web = false
+
+[tool.flet.app.startup_screen]
+show = false
+message = "Starting up the app…"
+
+[tool.flet.app.boot_screen]
+show = false
+message = "Preparing the app for its first launch…"
+
 
 #[tool.flet.android]
 #dependencies = [

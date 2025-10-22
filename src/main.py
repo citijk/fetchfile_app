@@ -5,9 +5,16 @@ import os
 import json
 from uuid import getnode as get_mac
 from jnius import autoclass
+import gettext
 
 def main(page: ft.Page):
 #   https://github.com/Creative-Media-Group/flet-localisation/blob/main/flet_localisation/__init__.py
+
+    LANGUAGES_ACCEPT = 'en de fr ar es fi ta ms el is it ja nb tl pl pt uk ru zh'.split()
+
+    gettext.bindtextdomain("messages", "translations")
+    gettext.textdomain("messages")
+
 
     temp_dir = os.getenv("FLET_APP_STORAGE_TEMP")
     data_dir = os.getenv("FLET_APP_STORAGE_DATA")
@@ -17,14 +24,17 @@ def main(page: ft.Page):
     CONFIG_PATH = os.path.join(data_dir, "config.json")
 
     def load_config():
-        if os.path.exists(CONFIG_PATH):
+        if os.path.exists(CONFIG_PATH) and os.access(CONFIG_PATH, os.R_OK):
             with open(CONFIG_PATH, "r") as f:
                 return json.load(f)
         return {}
 
     def save_config(config):
-        with open(CONFIG_PATH, "w") as f:
-            json.dump(config, f)
+        def _():
+            with open(CONFIG_PATH, "w") as f:
+                json.dump(config, f)
+        threading.Thread(target=_, daemon=True).start()
+
     config = load_config()
 
     locale = autoclass("java.util.Locale").getDefault()
@@ -34,15 +44,18 @@ def main(page: ft.Page):
     else:
         current_locale = (locale.getLanguage(), locale.getCountry())
 
+    translator = gettext.translation("messages", "translations", fallback=True, languages=[current_locale[0]])
+    _ = translator.gettext
+
+    def update(e=None):
+        page.update()
+
+    page.on_connect = update
+
     page.title = "Видео загрузчик FetchFile"
     page.padding = 20
     page.locale_configuration = ft.LocaleConfiguration(
-        supported_locales=[
-            ft.Locale("de", "DE"),
-            ft.Locale("es", "VE"),
-            ft.Locale("en", "US"),
-            ft.Locale("ru", "RU"),
-        ],
+        supported_locales=list(map(lambda e: ft.Locale(e, e.upper()), LANGUAGES_ACCEPT)),
         current_locale=ft.Locale(*current_locale)
     )
 
@@ -60,37 +73,29 @@ def main(page: ft.Page):
 
     def handle_locale_change(e):
         index = int(e.data)
-        if index == 0:
-            page.locale_configuration.current_locale = ft.Locale("de", "DE")
-            config["current_locale"] = ("de", "DE")
-        elif index == 1:
-            page.locale_configuration.current_locale = ft.Locale("es", "VE")
-            config["current_locale"] = ("es", "VE")
-        elif index == 2:
-            page.locale_configuration.current_locale = ft.Locale("en", "US")
-            config["current_locale"] = ("en", "US")
-        elif index == 3:
-            page.locale_configuration.current_locale = ft.Locale("ru", "RU")
-            config["current_locale"] = ("ru", "RU")
+        lng = LANGUAGES_ACCEPT[index]
+        page.locale_configuration.current_locale = ft.Locale(lng, lng.upper())
+        config["current_locale"] = (lng, lng.upper())
+
         locale_btn.text = config["current_locale"][1]
         save_config(config)
         page.update()
 
     def bs_dismissed(e):
-        page.add(ft.Text("Bottom sheet dismissed"))
+        page.add(ft.Text(_("Bottom sheet dismissed")))
 
     bs = ft.BottomSheet(
         ft.Container(
             ft.Column(
                 [
-                    ft.Text("Select lang"),
+                    ft.Text(_("Select lang")),
                     ft.CupertinoSlidingSegmentedButton(
                             selected_index=0,
                             thumb_color=ft.Colors.BLUE_400,
                             on_change=handle_locale_change,
-                            controls=[ft.Text("German"), ft.Text("Spanish"), ft.Text("English"), ft.Text("Russian")],
+                            controls=list(map(lambda e:ft.Text(e.upper()), LANGUAGES_ACCEPT)),
                     ),
-                    ft.ElevatedButton("Dismiss", on_click=lambda _: page.close(bs)),
+                    ft.ElevatedButton(_("Dismiss"), on_click=lambda _: page.close(bs)),
                 ],
                 horizontal_alignment=ft.CrossAxisAlignment.CENTER,
                 tight=True,
@@ -163,7 +168,7 @@ def main(page: ft.Page):
                 **kw,)
 
 
-    url_field = ft.TextField(label="Введите URL видео", width=(page.width-120))
+    url_field = ft.TextField(label=_("Введите URL видео"), width=(page.width-120))
     #url_field.value = "https://rutube.ru/video/c5f09f19624cf5c0fca126ca7e635a69/"
 
     info_text = ft.Text("", width=(page.width-120))
@@ -176,15 +181,15 @@ def main(page: ft.Page):
 
     progress_bar = ft.ProgressBar(width=(page.width-120), visible=False)
     status = ft.Text(get_mac())
-    download_button = ft.ElevatedButton("Скачать", disabled=True)
-    fetch_info_button = ft.ElevatedButton("Показать информацию")
-    select_folder_button = ft.ElevatedButton("Выбрать папку для сохранения")
+    download_button = ft.ElevatedButton(_("Скачать"), disabled=True)
+    fetch_info_button = ft.ElevatedButton(_("Показать информацию"))
+    select_folder_button = ft.ElevatedButton(_("Выбрать папку для сохранения"))
 
     file_picker = ft.FilePicker(on_result=None)
 
     save_folder = config.get("save_folder", os.path.expanduser("~"))
 
-    status.value = f"будет сохраненно в: {save_folder}"
+    status.value = _(f"будет сохраненно в: {save_folder}")
 
     def on_result(e: ft.FilePickerResultEvent):
         nonlocal save_folder
@@ -192,28 +197,28 @@ def main(page: ft.Page):
             save_folder = e.path
             config["save_folder"] = save_folder
             save_config(config)
-            status.value = f"Выбрана папка: {save_folder}"
+            status.value = _(f"Выбрана папка: {save_folder}")
         else:
-            status.value = "Выбор папки отменён"
+            status.value = _("Выбор папки отменён")
         page.update()
 
     file_picker.on_result = on_result
     page.overlay.append(file_picker)
 
     def open_folder_picker(e):
-        file_picker.get_directory_path(dialog_title="Выберите папку для сохранения", initial_directory=save_folder)
+        file_picker.get_directory_path(dialog_title=_("Выберите папку для сохранения"), initial_directory=save_folder)
 
     #select_folder_button.on_click = open_folder_picker
 
     def fetch_info(e):
         url = url_field.value.strip()
         if not url:
-            info_text.value = "Введите URL для получения информации"
+            info_text.value = _("Введите URL для получения информации")
             download_button.disabled = True
             page.update()
             return
 
-        info_text.value = "Получение информации..."
+        info_text.value = _("Получение информации...")
         download_button.disabled = True
         progress_bar.visible = False
         #status.value = ""
@@ -261,14 +266,14 @@ def main(page: ft.Page):
     def download_video(e):
         url = url_field.value.strip()
         if not url:
-            status.value = "Введите URL для загрузки"
+            status.value = _("Введите URL для загрузки")
             page.update()
             return
 
         download_button.disabled = True
         progress_bar.value = 0
         progress_bar.visible = True
-        status.value = "Начинается скачивание..."
+        status.value = _("Начинается скачивание...")
         page.update()
 
         def on_progress(d):
@@ -281,7 +286,7 @@ def main(page: ft.Page):
                 page.update()
             elif d['status'] == 'finished':
                 progress_bar.value = 1.0
-                status.value = "Скачивание завершено!"
+                status.value = _("Скачивание завершено!")
                 download_button.disabled = False
                 page.update()
 
@@ -326,7 +331,7 @@ def main(page: ft.Page):
                 [
                     ft.Row([
                         url_field,
-                        ft.ElevatedButton("Next", on_click=next_prev)
+                        ft.ElevatedButton(_("Дальше"), on_click=next_prev)
                     ]),
                 ],
             )
@@ -346,7 +351,7 @@ def main(page: ft.Page):
                         #ft.Text("This is the About Page!"),
                         download_button,
                         status,
-                        ft.ElevatedButton("Выбрать папку для сохранения", on_click = open_folder_picker),
+                        ft.ElevatedButton(_("Выбрать папку для сохранения"), on_click = open_folder_picker),
                     ],
                 )
             )
