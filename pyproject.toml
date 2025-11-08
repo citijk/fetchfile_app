@@ -12,6 +12,7 @@ dependencies = [
   "flet==0.28.3",
   "yt-dlp",
   "pyjnius",
+  "aiofiles",
   
 ]
 
@@ -35,6 +36,16 @@ message = "Starting up the app…"
 [tool.flet.app.boot_screen]
 show = false
 message = "Preparing the app for its first launch…"
+
+
+[tool.flet.android.permission]
+#"android.permission.CAMERA" = true
+#"android.permission.ACCESS_FINE_LOCATION" = true
+#"android.permission.ACCESS_COARSE_LOCATION" = true
+#"android.permission.ACCESS_BACKGROUND_LOCATION" = true
+#"android.permission.RECORD_AUDIO" = true
+"android.permission.WRITE_EXTERNAL_STORAGE" = true
+"android.permission.READ_EXTERNAL_STORAGE" = true
 
 
 #[tool.flet.android]

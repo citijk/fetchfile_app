@@ -1,13 +1,41 @@
 import flet as ft
 from yt_dlp import YoutubeDL
-import threading
+#import threading
 import os
 import json
 from uuid import getnode as get_mac
 from jnius import autoclass
 import gettext
+import aiofiles
 
-def main(page: ft.Page):
+class LazyString:
+    def __init__(self, func, *args, **kwargs):
+        self.func = func
+        self.args = args
+        self.kwargs = kwargs
+
+    def __str__(self):
+        return self.func(*self.args, **self.kwargs)
+
+    def __repr__(self):
+        return f"<LazyString: {str(self)}>"
+
+    # Чтобы объект корректно вел себя как строка, подклассируем некоторые методы
+    def __add__(self, other):
+        return str(self) + other
+
+    def __radd__(self, other):
+        return other + str(self)
+
+    def __eq__(self, other):
+        return str(self) == other
+
+    def __format__(self, format_spec):
+        return format(str(self), format_spec)
+
+
+
+async def main(page: ft.Page):
 #   https://github.com/Creative-Media-Group/flet-localisation/blob/main/flet_localisation/__init__.py
 
     LANGUAGES_ACCEPT = 'en de fr ar es fi ta ms el is it ja nb tl pl pt uk ru zh'.split()
@@ -23,19 +51,29 @@ def main(page: ft.Page):
 
     CONFIG_PATH = os.path.join(data_dir, "config.json")
 
-    def load_config():
+    async def Thread():
+        page.run_task()
+
+    async def load_config():
         if os.path.exists(CONFIG_PATH) and os.access(CONFIG_PATH, os.R_OK):
-            with open(CONFIG_PATH, "r") as f:
-                return json.load(f)
+            async with aiofiles.open(CONFIG_PATH, mode='r') as f:
+                contents = await f.read()
+                return json.loads(contents)
+
+            #with open(CONFIG_PATH, "r") as f:
+            #    return json.load(f)
         return {}
 
-    def save_config(config):
-        def _():
-            with open(CONFIG_PATH, "w") as f:
-                json.dump(config, f)
-        threading.Thread(target=_, daemon=True).start()
+    async def save_config(config):
+        async with aiofiles.open(CONFIG_PATH, mode='w') as f:
+            await f.write(json.dumps(config))
 
-    config = load_config()
+        #def _():
+        #    with open(CONFIG_PATH, "w") as f:
+        #        json.dump(config, f)
+        #threading.Thread(target=_, daemon=True).start()
+
+    config = await load_config()
 
     locale = autoclass("java.util.Locale").getDefault()
     #print(locale.getLanguage(), locale.getCountry())
@@ -44,13 +82,22 @@ def main(page: ft.Page):
     else:
         current_locale = (locale.getLanguage(), locale.getCountry())
 
-    translator = gettext.translation("messages", "translations", fallback=True, languages=[current_locale[0]])
-    _ = translator.gettext
+    def translate(text):
+        # Заглушка, в реальной задаче здесь будет вызов какого-то переводчика
+        translator = gettext.translation("messages", "translations", fallback=True, languages=[current_locale[0]])
+        _ = translator.gettext
+        return _(text)
+
+    def _(s):
+        return LazyString(translate, s)
+
 
     def update(e=None):
         page.update()
 
     page.on_connect = update
+
+    page.scroll = ft.ScrollMode.AUTO
 
     page.title = "Видео загрузчик FetchFile"
     page.padding = 20
@@ -78,7 +125,7 @@ def main(page: ft.Page):
         config["current_locale"] = (lng, lng.upper())
 
         locale_btn.text = config["current_locale"][1]
-        save_config(config)
+        page.run_task(save_config, config)
         page.update()
 
     def bs_dismissed(e):
@@ -159,13 +206,12 @@ def main(page: ft.Page):
 
     class BaseView(ft.View):
         def __init__(self, *a, **kw):
-            super().__init__(*a,
-                appbar = appbar,
-                bottom_appbar = bottom_appbar,
-                fullscreen_dialog = True,
-                vertical_alignment=ft.MainAxisAlignment.CENTER,
-                horizontal_alignment = ft.CrossAxisAlignment.CENTER,
-                **kw,)
+            kw.setdefault('vertical_alignment', ft.MainAxisAlignment.CENTER)
+            kw.setdefault('horizontal_alignment', ft.CrossAxisAlignment.CENTER)
+            kw.setdefault('appbar', appbar)
+            kw.setdefault('bottom_appbar', bottom_appbar)
+            kw.setdefault('fullscreen_dialog', True)
+            super().__init__(*a, **kw,)
 
 
     url_field = ft.TextField(label=_("Введите URL видео"), width=(page.width-120))
@@ -196,7 +242,7 @@ def main(page: ft.Page):
         if e.path:
             save_folder = e.path
             config["save_folder"] = save_folder
-            save_config(config)
+            page.run_task(save_config, config)
             status.value = _(f"Выбрана папка: {save_folder}")
         else:
             status.value = _("Выбор папки отменён")
@@ -261,7 +307,8 @@ def main(page: ft.Page):
                 download_button.disabled = True
             page.update()
 
-        threading.Thread(target=run_info, daemon=True).start()
+        page.run_thread(run_info)
+        #threading.Thread(target=run_info, daemon=True).start()
 
     def download_video(e):
         url = url_field.value.strip()
@@ -307,7 +354,8 @@ def main(page: ft.Page):
                 download_button.disabled = False
                 page.update()
 
-        threading.Thread(target=run_download, daemon=True).start()
+        page.run_thread(run_download)
+        #threading.Thread(target=run_download, daemon=True).start()
 
     fetch_info_button.on_click = fetch_info
     #download_button.on_click = download_video
@@ -345,8 +393,14 @@ def main(page: ft.Page):
                 BaseView(
                     "/preview",
                     [
-                        image,
-                        info_text,
+                        ft.Row(
+                            [
+                                image,
+                                info_text,
+                            ],
+                            alignment=ft.MainAxisAlignment.CENTER,
+                            vertical_alignment=ft.CrossAxisAlignment.CENTER,
+                        ),
                         #ft.AppBar(title=ft.Text("About")),
                         #ft.Text("This is the About Page!"),
                         download_button,
@@ -364,6 +418,7 @@ def main(page: ft.Page):
                     "/download",
                     [
                         progress_bar,
+                        status,
                         ft.ElevatedButton("cancel", on_click=cancel),
                     ],
                 )
@@ -372,6 +427,9 @@ def main(page: ft.Page):
 
 
     def view_pop(e):
+        #page.views.pop()
+        #back_page = page.views[-1]
+        #page.go(back_page.route)
         top_view = page.views.pop()
         if len(page.views) > 0:
             top_view = page.views[-1]

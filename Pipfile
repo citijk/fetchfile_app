@@ -5,6 +5,7 @@ name = "pypi"
 
 [packages]
 flet = {extras = ["cli"], version = "*"}
+aiofiles = "*"
 
 [dev-packages]
 
