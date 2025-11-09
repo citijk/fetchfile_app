@@ -7,6 +7,7 @@ from uuid import getnode as get_mac
 from jnius import autoclass
 import gettext
 import aiofiles
+import flet_webview as ftwv
 
 class LazyString:
     def __init__(self, func, *args, **kwargs):
@@ -37,6 +38,7 @@ class LazyString:
 
 async def main(page: ft.Page):
 #   https://github.com/Creative-Media-Group/flet-localisation/blob/main/flet_localisation/__init__.py
+
 
     LANGUAGES_ACCEPT = 'en de fr ar es fi ta ms el is it ja nb tl pl pt uk ru zh'.split()
 
@@ -131,27 +133,21 @@ async def main(page: ft.Page):
     def bs_dismissed(e):
         page.add(ft.Text(_("Bottom sheet dismissed")))
 
-    bs = ft.BottomSheet(
-        ft.Container(
-            ft.Column(
-                [
-                    ft.Text(_("Select lang")),
-                    ft.CupertinoSlidingSegmentedButton(
-                            selected_index=0,
-                            thumb_color=ft.Colors.BLUE_400,
-                            on_change=handle_locale_change,
-                            controls=list(map(lambda e:ft.Text(e.upper()), LANGUAGES_ACCEPT)),
-                    ),
-                    ft.ElevatedButton(_("Dismiss"), on_click=lambda _: page.close(bs)),
-                ],
-                horizontal_alignment=ft.CrossAxisAlignment.CENTER,
-                tight=True,
-            ),
-            padding=50,
-        ),
-        open=False,
-        on_dismiss=bs_dismissed,
+    cupertino_picker = ft.CupertinoPicker(
+        selected_index=3,
+        magnification=1.22,
+        squeeze=1.2,
+        use_magnifier=True,
+        on_change=handle_locale_change,
+        controls=list(map(lambda e:ft.Text(e.upper()), LANGUAGES_ACCEPT)),
     )
+
+
+    bs = ft.CupertinoBottomSheet(
+            cupertino_picker,
+            height=216,
+            padding=ft.padding.only(top=6),
+        )
     page.overlay.append(bs)
 
 
@@ -165,13 +161,14 @@ async def main(page: ft.Page):
         actions=[
             #ft.IconButton(ft.Icons.WB_SUNNY_OUTLINED),
             #ft.IconButton(ft.Icons.FILTER_3),
+            ft.IconButton(icon=ft.Icons.MENU, icon_color=ft.Colors.WHITE, on_click=lambda e: page.open(panel)),
             locale_btn,
             #ft.PopupMenuButton(
             #    items=[
             #        ft.PopupMenuItem(text="Item 1"),
             #        ft.PopupMenuItem(),  # divider
             #        ft.PopupMenuItem(
-            #            text="Checked item", checked=False, on_click=check_item_clicked
+            #            text="Checked item", checked=False
             #        ),
             #    ]
             #),
@@ -192,16 +189,68 @@ async def main(page: ft.Page):
 
     bottom_appbar = ft.BottomAppBar(
         content=ft.Row(
-            [
+            controls=[
                 #ft.IconButton(ft.Icons.MENU),
                 ft.Text("fetchfile.me (c)"),
                 #ft.IconButton(ft.Icons.SEARCH),
+                #ft.Container(expand=True),
+                #ft.IconButton(icon=ft.Icons.MENU, icon_color=ft.Colors.WHITE),
             ],
             #alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
             alignment=ft.MainAxisAlignment.CENTER,
         ),
         bgcolor=ft.Colors.BLUE_GREY_900,
     )
+
+    #def close_handle(e):
+    #    if len(panel_sheet.controls) < 1:
+    #        page.close(panel)
+    #    update()
+
+    panel_sheet = ft.ExpansionPanelList(
+        expand_icon_color=ft.Colors.AMBER,
+        elevation=8,
+        #divider_color=ft.Colors.AMBER,
+        #on_change=close_handle,
+        #controls=[
+        #    ft.ExpansionPanel(
+        #        # has no header and content - placeholders will be used
+        #        bgcolor=ft.Colors.BLUE_400,
+        #        expanded=True,
+        #    )
+        #],
+    )
+    panel = ft.BottomSheet(panel_sheet, open=False)
+
+    def addListTile(url, title, text, thumbnail):
+        exp = ft.ExpansionPanel(
+            header=ft.ListTile(title=ft.Text(url)),
+        )
+
+        def remove_handle(e):
+            panel_sheet.controls.remove(exp)
+            if len(panel_sheet.controls) < 1:
+                page.close(panel)
+            update()
+
+        exp.content = ft.ListTile(
+            leading=ft.Image(src=thumbnail, width=130),
+            title=ft.Text(title),
+            subtitle=ft.Text(text),
+            trailing=ft.PopupMenuButton(
+                icon=ft.Icons.MORE_VERT,
+                items=[
+                    ft.PopupMenuItem(text=_("Download"), icon=ft.Icons.SAVE, on_click=lambda e:download_video(url)),
+                    ft.PopupMenuItem(text=_("Delete"), icon=ft.Icons.DELETE, on_click=remove_handle),
+                ],
+            ),
+        )
+        panel_sheet.controls.append(exp)
+        return exp
+
+
+    page.overlay.append(panel)
+
 
 
     class BaseView(ft.View):
@@ -211,17 +260,25 @@ async def main(page: ft.Page):
             kw.setdefault('appbar', appbar)
             kw.setdefault('bottom_appbar', bottom_appbar)
             kw.setdefault('fullscreen_dialog', True)
+
+            #kw.setdefault('floating_action_button', ft.FloatingActionButton(
+            #    icon=ft.Icons.ADD,
+            #    shape=ft.CircleBorder(),
+            #    on_click=lambda e: page.open(panel)
+            #))
+            #kw.setdefault('floating_action_button_location', ft.FloatingActionButtonLocation.CENTER_DOCKED)
+
             super().__init__(*a, **kw,)
 
 
-    url_field = ft.TextField(label=_("Введите URL видео"), width=(page.width-120))
+    url_field = ft.TextField(label=_("Введите URL видео"), width=(page.width-120), autofocus=True)
     #url_field.value = "https://rutube.ru/video/c5f09f19624cf5c0fca126ca7e635a69/"
 
-    info_text = ft.Text("", width=(page.width-120))
+    info_text = ft.Text("", width=page.width - (page.width / 3) - 80)
 
     image = ft.Image(
                 src=False,
-                width=200,  # Set desired width
+                width=(page.width / 3),  # Set desired width
                 fit=ft.ImageFit.COVER # Adjust how the image fits within the specified size
             )
 
@@ -294,14 +351,19 @@ async def main(page: ft.Page):
                         image.src = thumbnail
                         image.update()
 
-                    info_text.value = (
-                        f"Название: {title}\n"
+                    body = (
                         f"Длительность: {duration_min}м {duration_sec}с\n"
                         f"Загрузчик: {uploader}\n"
                         f"Размер файла: {filesize_mb if isinstance(filesize_mb, str) else f'{filesize_mb:.2f} MB'}\n"
                         f"Формат: {ext}"
                     )
+                    info_text.value = (
+                        f"Название: {title}\n"
+                        f"{body}"
+                    )
+
                     download_button.disabled = False
+                    exp = addListTile(url, title, body, thumbnail)
             except Exception as ex:
                 info_text.value = f"Ошибка получения информации: {ex}"
                 download_button.disabled = True
@@ -310,13 +372,11 @@ async def main(page: ft.Page):
         page.run_thread(run_info)
         #threading.Thread(target=run_info, daemon=True).start()
 
-    def download_video(e):
-        url = url_field.value.strip()
+    def download_video(url):
         if not url:
             status.value = _("Введите URL для загрузки")
             page.update()
             return
-
         download_button.disabled = True
         progress_bar.value = 0
         progress_bar.visible = True
@@ -386,27 +446,43 @@ async def main(page: ft.Page):
         )
         if page.route == "/preview":
             def next_prev(e):
-                download_video(e)
+                download_video(url_field.value.strip())
                 page.go("/download")
             download_button.on_click=next_prev
+
+            wv = ftwv.WebView(
+                url=url_field.value.strip(),
+                on_page_started=lambda _: print("Page started"),
+                on_page_ended=lambda _: print("Page ended"),
+                on_web_resource_error=lambda e: print("Page error:", e.data),
+                expand=True,
+            )
+
             page.views.append(
                 BaseView(
                     "/preview",
                     [
-                        ft.Row(
-                            [
-                                image,
-                                info_text,
-                            ],
-                            alignment=ft.MainAxisAlignment.CENTER,
-                            vertical_alignment=ft.CrossAxisAlignment.CENTER,
-                        ),
-                        #ft.AppBar(title=ft.Text("About")),
-                        #ft.Text("This is the About Page!"),
-                        download_button,
-                        status,
-                        ft.ElevatedButton(_("Выбрать папку для сохранения"), on_click = open_folder_picker),
+                    wv,
+                        #ft.Row(
+                        #    [
+                        #        image,
+                        #        info_text,
+                        #    ],
+                        #    alignment=ft.MainAxisAlignment.CENTER,
+                        #    vertical_alignment=ft.CrossAxisAlignment.CENTER,
+                        #),
+                        ##ft.AppBar(title=ft.Text("About")),
+                        ##ft.Text("This is the About Page!"),
+                        #download_button,
+                        #status,
+                        #ft.ElevatedButton(_("Выбрать папку для сохранения"), on_click = open_folder_picker),
                     ],
+                    floating_action_button=ft.FloatingActionButton(
+                        icon=ft.Icons.ADD,
+                        shape=ft.CircleBorder(),
+                        on_click=next_prev
+                    ),
+                    floating_action_button_location = ft.FloatingActionButtonLocation.CENTER_DOCKED
                 )
             )
         elif page.route == "/download":
