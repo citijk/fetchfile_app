@@ -412,6 +412,12 @@ async def main(page: ft.Page):
                 status.value = f"Ошибка: {ex}"
                 progress_bar.visible = False
                 download_button.disabled = False
+
+                page.snack_bar = ft.SnackBar(
+                    ft.Text(f"An error occurred: {ex}"),
+                    open=True
+                )
+
                 page.update()
 
         page.run_thread(run_download)
@@ -441,6 +447,7 @@ async def main(page: ft.Page):
                         url_field,
                         ft.ElevatedButton(_("Дальше"), on_click=next_prev)
                     ]),
+                    ft.ElevatedButton(_("Выбрать папку для сохранения"), on_click = open_folder_picker),
                 ],
             )
         )
