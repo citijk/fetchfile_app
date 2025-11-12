@@ -489,7 +489,7 @@ async def main(page: ft.Page):
                         shape=ft.CircleBorder(),
                         on_click=next_prev
                     ),
-                    floating_action_button_location = ft.FloatingActionButtonLocation.CENTER_DOCKED
+                    floating_action_button_location = ft.FloatingActionButtonLocation.MINI_END_DOCKED
                 )
             )
         elif page.route == "/download":
