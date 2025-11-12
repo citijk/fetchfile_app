@@ -478,7 +478,7 @@ async def main(page: ft.Page):
                         #ft.ElevatedButton(_("Выбрать папку для сохранения"), on_click = open_folder_picker),
                     ],
                     floating_action_button=ft.FloatingActionButton(
-                        icon=ft.Icons.ADD,
+                        icon=ft.Icons.DOWNLOAD,
                         shape=ft.CircleBorder(),
                         on_click=next_prev
                     ),
@@ -514,7 +514,20 @@ async def main(page: ft.Page):
     page.on_route_change = route_change
     page.on_view_pop = view_pop
 
+
+    def handle_page_error(e: ft.ControlEvent):
+        print(f"An unhandled page error occurred: {e.data}")
+        page.snack_bar = ft.SnackBar(
+            ft.Text(f"An error occurred: {e.data}"),
+            open=True
+        )
+        page.update()
+
+    # Assign the error handler to page.on_error
+    page.on_error = handle_page_error
+
     page.go(page.route)
+
 
 #    form_row = ft.Column(
 #        [
