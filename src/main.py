@@ -159,6 +159,22 @@ class VideoDownloader:
             self.page.session.set("download_progress", percent)
             self.page.update()
 
+    def progress_hook1(self, d):
+        if d['status'] == 'downloading':
+            total = d.get('total_bytes') or d.get('total_bytes_estimate') or 1
+            downloaded = d.get('downloaded_bytes', 0)
+            progress = downloaded / total if total else 0
+            progress_bar.value = progress
+            status.value = f"Скачано: {downloaded / 1024:.2f} KB / {total / 1024:.2f} KB"
+            page.update()
+        elif d['status'] == 'finished':
+            progress_bar.value = 1.0
+            status.value = _("Скачивание завершено!")
+            download_button.disabled = False
+            page.update()
+
+
+
     def update_queue_status(self, url: str, format_id: str, status: str):
         for item in self.queue:
             if item["url"] == url and item["format_id"] == format_id:
@@ -265,24 +281,37 @@ class VideoDownloader:
                 padding=20,
             )
 
-            for item in reversed(self.history):  # показываем новые сверху
-                list_view.controls.append(
-                    ft.Card(
-                        content=ft.Container(
-                            padding=10,
-                            content=ft.Column([
+            for idx, item in enumerate(reversed(self.history)):  # показываем новые сверху
+                card = ft.Card(
+                    content=ft.Container(
+                        padding=10,
+                        content=ft.Row([
+                            ft.Column([
                                 ft.Text(item["title"], weight=ft.FontWeight.BOLD),
                                 ft.Text(f"Формат: {item['format_id']}", size=12),
-                                ft.Text(f"Файл: {os.path.basename(item['filepath'])}", size=12, color=ft.Colors.BLUE_400),
                                 ft.Text(
-                                    f"Дата: {datetime.fromisoformat(item['timestamp']).strftime('%d.%m.%Y %H:%M')}",
+                                    f"Файл: {os.path.basename(item['filepath'])}",
+                                    size=12,
+                                    color=ft.Colors.BLUE_400,
+                                    no_wrap=True,
+                                ),
+                                ft.Text(
+                                    f"!Дата: {datetime.fromisoformat(item['timestamp']).strftime('%d.%m.%Y %H:%M')}",
                                     size=10,
                                     color=ft.Colors.GREY_600
                                 ),
-                            ])
-                        )
+                            ], expand=True),
+                            ft.IconButton(
+                                icon=ft.Icons.DELETE_OUTLINE,
+                                icon_color=ft.Colors.RED_400,
+                                tooltip="Удалить запись",
+                                on_click=lambda e, i=idx: self.delete_history_item(i),
+                            ),
+                        ], alignment=ft.MainAxisAlignment.SPACE_BETWEEN)
                     )
                 )
+                list_view.controls.append(card)
+
 
             controls.append(list_view)
 
@@ -408,6 +437,40 @@ class VideoDownloader:
             horizontal_alignment=ft.CrossAxisAlignment.CENTER,
         )
 
+
+
+    def delete_history_item(self, index: int):
+        # Получаем реальный индекс в исходном списке (т.к. показываем reversed)
+        real_index = len(self.history) - 1 - index
+
+        def confirm_delete(e):
+            self.history.pop(real_index)
+            self.save_history()
+            self.refresh_history_page()
+            self.page.snackbar = ft.SnackBar(
+                content=ft.Text("Запись удалена из истории."),
+                duration=2000,
+            )
+            self.page.snackbar.open = True
+            self.page.update()
+
+        def cancel_delete(e):
+            self.page.close(self.page.dialog)
+            self.page.dialog.open = False
+            self.page.update()
+
+        self.page.dialog = ft.AlertDialog(
+            title=ft.Text("Удалить запись?"),
+            content=ft.Text("Вы уверены, что хотите удалить эту запись из истории?"),
+            actions=[
+                ft.TextButton("Отмена", on_click=cancel_delete),
+                ft.TextButton("Удалить", on_click=confirm_delete, style=ft.ButtonStyle(color=ft.Colors.RED)),
+            ],
+            modal=True,
+        )
+        self.page.open(self.page.dialog)
+        self.page.dialog.open = True
+        self.page.update()
 
     # --- Обработчики событий ---
 
@@ -551,4 +614,4 @@ if __name__ == "__main__":
 
 
 
-#напиши полноценное приложение для скачивания видео по ссылке используя flet.View и yt-dlp. В нем нолжно быть несколько страниц: Страница ввода ссылки, после ввода получаем список доступных форматов для выбора из возможных; страница истории; страница очереди; страница настроек. В настройках выбор папки для сохранения flet.FilePicker и если директория не указана, просить указать. Синтаксис для версии flet 0.28.3
+#напиши полноценное приложение для скачивания видео по ссылке используя flet.View и yt-dlp. В нем нолжно быть несколько страниц: Страница ввода ссылки, после ввода получаем список доступных форматов для выбора из возможных; страница истории; страница очереди; страница настроек. В настройках выбор папки для сохранения flet.FilePicker и если директория не указана, просить указать. Добавь меню BottomAppBar для выбора каждого пункта.  Синтаксис для версии flet 0.28.3
