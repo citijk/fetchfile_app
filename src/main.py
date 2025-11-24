@@ -106,15 +106,16 @@ class VideoDownloader:
             'no_warnings': True,
         }
         try:
+            print(url)
             with yt_dlp.YoutubeDL(ydl_opts) as ydl:
                 info = ydl.extract_info(url, download=False)
                 formats = []
                 for f in info['formats']:
-                    if f.get('format_note') and f.get('ext'):
+                    if (f.get('format_note') or f.get('format')) and f.get('ext'):
                         formats.append({
                             'format_id': f['format_id'],
                             'ext': f['ext'],
-                            'format_note': f['format_note'],
+                            'format_note': (f.get('format_note') or f.get('format')),
                             'filesize': f.get('filesize'),
                             'fps': f.get('fps'),
                         })
@@ -124,9 +125,9 @@ class VideoDownloader:
             return []
 
     def download_video(self, url: str, format_id: str) -> bool:
-        #if not self.settings["download_path"]:
-        #    self.show_snackbar("Укажите папку для сохранения в настройках!")
-        #    return False
+        if not self.settings["download_path"]:
+            self.show_snackbar("Укажите папку для сохранения в настройках!")
+            return False
 
         ydl_opts = {
             'format': format_id,
