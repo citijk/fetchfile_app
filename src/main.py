@@ -8,9 +8,13 @@ from typing import List, Dict, Optional
 
 # Константы
 APP_NAME = "Video Downloader"
-SETTINGS_FILE = "settings.json"
-HISTORY_FILE = "history.json"
-QUEUE_FILE = "queue.json"
+
+temp_dir = os.getenv("FLET_APP_STORAGE_TEMP")
+data_dir = os.getenv("FLET_APP_STORAGE_DATA")
+
+SETTINGS_FILE = os.path.join(data_dir, "settings.json")
+HISTORY_FILE = os.path.join(data_dir, "history.json")
+QUEUE_FILE = os.path.join(data_dir, "queue.json")
 
 
 class VideoDownloader:
