@@ -4,6 +4,8 @@ import os
 import json
 from datetime import datetime
 from typing import List, Dict, Optional
+from pprint import pprint
+import threading
 
 
 # Константы
@@ -25,6 +27,12 @@ class VideoDownloader:
         self.queue = self.load_queue()
         self.formats = []
         self.current_url = ""
+        #self.progress = ft.ProgressBar(visible=True, value=0, bar_height=2)
+        #ft.Ref[ft.Column]()
+
+        #self.progress.current.controls.append(
+        #    ft.ProgressBar(width=(page.width-120), visible=False),
+        #)
 
     def bottom_nav(self):
         return ft.BottomAppBar(
@@ -59,7 +67,7 @@ class VideoDownloader:
         if os.path.exists(SETTINGS_FILE):
             with open(SETTINGS_FILE, "r", encoding="utf-8") as f:
                 return json.load(f)
-        return {"download_path": ""}
+        return {"download_path": temp_dir}
 
     def save_settings(self):
         with open(SETTINGS_FILE, "w", encoding="utf-8") as f:
@@ -78,12 +86,22 @@ class VideoDownloader:
     def load_queue(self) -> List[Dict]:
         if os.path.exists(QUEUE_FILE):
             with open(QUEUE_FILE, "r", encoding="utf-8") as f:
-                return json.load(f)
+                q = json.load(f)
+                #for e in q:
+                #    if not 'progress' in e:
+                #        e.setdefault('progress', ft.ProgressBar(visible=True, bar_height=2))
+                return q
         return []
 
     def save_queue(self):
         with open(QUEUE_FILE, "w", encoding="utf-8") as f:
-            json.dump(self.queue, f, indent=2)
+            queue = []
+            for e in self.queue:
+                s = e.copy()
+                if 'progress' in s:
+                    del s['progress']
+                queue.append(s)
+            json.dump(queue, f, indent=2)
 
     def add_to_history(self, url: str, title: str, format_id: str, filepath: str):
         self.history.append({
@@ -100,7 +118,8 @@ class VideoDownloader:
             "url": url,
             "format_id": format_id,
             "status": "pending",
-            "timestamp": datetime.now().isoformat()
+            "timestamp": datetime.now().isoformat(),
+            "progress": ft.ProgressBar(visible=True, bar_height=2),
         })
         self.save_queue()
 
@@ -110,10 +129,10 @@ class VideoDownloader:
             'no_warnings': True,
         }
         try:
-            print(url)
             with yt_dlp.YoutubeDL(ydl_opts) as ydl:
                 info = ydl.extract_info(url, download=False)
                 formats = []
+                #pprint(info)
                 for f in info['formats']:
                     if (f.get('format_note') or f.get('format')) and f.get('ext'):
                         formats.append({
@@ -122,6 +141,8 @@ class VideoDownloader:
                             'format_note': (f.get('format_note') or f.get('format')),
                             'filesize': f.get('filesize'),
                             'fps': f.get('fps'),
+                            'progress': ft.ProgressBar(visible=True, value=0, bar_height=2),
+                            'thumbnail': f.get('thumbnail'),
                         })
                 return sorted(formats, key=lambda x: (x['filesize'] or 0), reverse=True)
         except Exception as e:
@@ -155,7 +176,15 @@ class VideoDownloader:
 
     def progress_hook(self, d):
         if d['status'] == 'downloading':
+
             percent = d.get('_percent_str', '0%')
+            total = d.get('total_bytes') or d.get('total_bytes_estimate') or 1
+            downloaded = d.get('downloaded_bytes', 0)
+            progress = downloaded / total if total else 0
+            #self.progress.value = progress
+            for i in (filter(lambda e:e.get('progress') and e['format_id']==d['info_dict']['format_id'], self.queue)):
+                i['progress'].value = progress
+
             self.page.session.set("download_progress", percent)
             self.page.update()
 
@@ -176,6 +205,7 @@ class VideoDownloader:
 
 
     def update_queue_status(self, url: str, format_id: str, status: str):
+        print(self.queue)
         for item in self.queue:
             if item["url"] == url and item["format_id"] == format_id:
                 item["status"] = status
@@ -184,12 +214,19 @@ class VideoDownloader:
         self.refresh_queue_page()
 
     def show_snackbar(self, message: str):
-        self.page.snackbar = ft.SnackBar(
+        #self.page.snackbar = ft.SnackBar(
+        #    content=ft.Text(message),
+        #    action="Закрыть",
+        #    action_color=ft.Colors.BLUE,
+        #)
+        #self.page.snackbar.open = True
+        #self.page.update()
+
+        self.page.open(ft.SnackBar(
             content=ft.Text(message),
             action="Закрыть",
             action_color=ft.Colors.BLUE,
-        )
-        self.page.snackbar.open = True
+        ))
         self.page.update()
 
     # --- Страницы приложения ---
@@ -208,8 +245,8 @@ class VideoDownloader:
                         ),
                         ft.ElevatedButton(
                             "Получить форматы",
-                            on_click=self.fetch_formats,
-                            disabled=True,
+                            on_click=lambda e: self.page.run_thread(self.fetch_formats, e),
+                            #disabled=True,
                             expand=True,
                         ),
                     ],
@@ -349,6 +386,9 @@ class VideoDownloader:
                 status_color = ft.Colors.GREEN if item["status"] == "completed" else \
                             ft.Colors.RED if "error" in item["status"] else ft.Colors.ORANGE
 
+
+                #self.progress.width=(self.page.width/2 if self.page.width >400 else self.page.width)
+
                 list_view.controls.append(
                     ft.Card(
                         content=ft.Container(
@@ -362,6 +402,7 @@ class VideoDownloader:
                                     size=10,
                                     color=ft.Colors.GREY_600
                                 ),
+                                item['progress'] if 'progress' in item else ft.Text(),
                             ])
                         )
                     )
@@ -527,7 +568,6 @@ class VideoDownloader:
         def download_task():
             self.download_video(self.current_url, format_id)
         
-        import threading
         thread = threading.Thread(target=download_task)
         thread.start()
 
