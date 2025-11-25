@@ -59,7 +59,7 @@ class VideoDownloader:
         if os.path.exists(SETTINGS_FILE):
             with open(SETTINGS_FILE, "r", encoding="utf-8") as f:
                 return json.load(f)
-        return {"download_path": "/Users/z/Downloads"}
+        return {"download_path": ""}
 
     def save_settings(self):
         with open(SETTINGS_FILE, "w", encoding="utf-8") as f:
@@ -394,8 +394,27 @@ class VideoDownloader:
                 path_field.value = self.settings["download_path"]
                 self.page.update()
 
+        path_field = ft.TextField(
+            label="Папка для сохранения",
+            value=self.settings["download_path"],
+            read_only=True,
+            expand=True,
+        )
+
+        def on_result_pick_dialog(e: ft.FilePickerResultEvent):
+            if e.path:
+                self.settings["download_path"] = e.path
+                path_field.value = self.settings["download_path"]
+                self.save_settings()
+            else:
+                self.show_snackbar("Выбор отменен")
+
+            self.page.update()
+
         pick_dialog = ft.FilePicker(on_result=on_pick_result)
         self.page.overlay.append(pick_dialog)
+
+        pick_dialog.on_result = on_result_pick_dialog
 
         def open_folder_picker(e):
             #pick_dialog.pick_files(
@@ -403,12 +422,7 @@ class VideoDownloader:
             #        )
             pick_dialog.get_directory_path(dialog_title="Выберите папку для сохранения", initial_directory=self.settings["download_path"])
 
-        path_field = ft.TextField(
-            label="Папка для сохранения",
-            value=self.settings["download_path"],
-            read_only=True,
-            expand=True,
-        )
+
 
         controls = [
             ft.AppBar(title=ft.Text("Настройки"), bgcolor=ft.Colors.SURFACE),
@@ -447,12 +461,13 @@ class VideoDownloader:
             self.history.pop(real_index)
             self.save_history()
             self.refresh_history_page()
-            self.page.snackbar = ft.SnackBar(
-                content=ft.Text("Запись удалена из истории."),
-                duration=2000,
-            )
-            self.page.snackbar.open = True
-            self.page.update()
+            #self.page.snackbar = ft.SnackBar(
+            #    content=ft.Text("Запись удалена из истории."),
+            #    duration=2000,
+            #)
+            self.show_snackbar("Запись удалена из истории.")
+            #self.page.snackbar.open = True
+            #self.page.update()
 
         def cancel_delete(e):
             self.page.close(self.page.dialog)
