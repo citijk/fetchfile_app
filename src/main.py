@@ -427,6 +427,13 @@ class VideoDownloader:
         )
 
     def settings_page(self):
+        path_field = ft.TextField(
+            label="Папка для сохранения",
+            value=self.settings["download_path"],
+            read_only=True,
+            expand=True,
+        )
+
         def on_pick_result(e: ft.FilePickerResultEvent):
             if e.files and e.files[0].path:
                 self.settings["download_path"] = e.files[0].path
@@ -434,13 +441,6 @@ class VideoDownloader:
                 # Обновляем значение в текстовом поле
                 path_field.value = self.settings["download_path"]
                 self.page.update()
-
-        path_field = ft.TextField(
-            label="Папка для сохранения",
-            value=self.settings["download_path"],
-            read_only=True,
-            expand=True,
-        )
 
         def on_result_pick_dialog(e: ft.FilePickerResultEvent):
             if e.path:
@@ -452,10 +452,8 @@ class VideoDownloader:
 
             self.page.update()
 
-        pick_dialog = ft.FilePicker(on_result=on_pick_result)
+        pick_dialog = ft.FilePicker(on_result=on_result_pick_dialog)
         self.page.overlay.append(pick_dialog)
-
-        pick_dialog.on_result = on_result_pick_dialog
 
         def open_folder_picker(e):
             #pick_dialog.pick_files(
