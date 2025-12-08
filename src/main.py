@@ -7,6 +7,7 @@ from datetime import datetime
 from typing import List, Dict, Optional
 from pprint import pprint
 
+import flet as ft
 
 # Константы
 APP_NAME = "Video Downloader"
@@ -347,11 +348,27 @@ class VideoDownloader:
                         padding=10,
                         content=ft.Row([
                             ft.Container(
-                                content=ft.Image(
-                                    src=item.get('thumbnail') or 'No_Image_Available.jpeg',
-                                    width=100,
-                                    height=100,
-                                    fit=ft.ImageFit.CONTAIN,
+                                content=ft.Stack(  # Используем Stack для наложения элементов
+                                    controls=[
+                                        ft.Image(
+                                            src=item.get('thumbnail') or 'No_Image_Available.jpeg',
+                                            width=100,
+                                            height=100,
+                                            fit=ft.ImageFit.COVER,
+                                        ),
+                                        # Добавляем иконку по центру поверх изображения
+                                        ft.Container(
+                                            content=ft.Icon(
+                                                name=ft.Icons.PLAY_CIRCLE_FILL,
+                                                color=ft.Colors.WHITE, # Белый цвет иконки для контраста
+                                                size=50, # Увеличиваем размер иконки
+                                            ),
+                                            width=100,
+                                            height=100,
+                                            alignment=ft.alignment.center, # Выравниваем контейнер (и иконку внутри) по центру Stack
+                                            opacity=0.7,
+                                        ),
+                                    ],
                                 ),
                                 on_click=lambda e, filevideo=item['filepath']: self.play_video(e, filevideo),
                                 ink=True,
