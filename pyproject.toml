@@ -1,6 +1,6 @@
 [project]
 name = "fetchfile"
-version = "0.1.1"
+version = "0.1.2"
 description = ""
 readme = "README.md"
 requires-python = ">=3.9"
@@ -20,7 +20,7 @@ dependencies = [
 ]
 
 [tool.flet]
-org = "com.fetchfile.me"
+org = "com.fetchfile"
 product = "FetchFile"
 company = "FetchFile"
 copyright = "FetchFile (C) 2025"

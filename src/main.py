@@ -551,14 +551,17 @@ class VideoDownloader:
                 title=os.path.basename(filevideo),
                 playlist=ftv.VideoMedia(resource=filevideo),
                 autoplay=True,
+                expand=True,
             )
         else:
-            video_player = ft.Text(f"Файл не найден {filevideo}")
+            video_player = ft.Text(f"Файл не обнаружен: {filevideo}")
 
         self.page.dialog = ft.AlertDialog(
             #title=ft.Text("play_video: "+os.path.basename(filevideo)),
             content=ft.Container(
                 content=video_player,
+                expand=True,
+                alignment=ft.alignment.center,
                 #width=400,
                 #height=300,
             ),
