@@ -6,7 +6,6 @@ import json
 from datetime import datetime
 from typing import List, Dict, Optional
 from pprint import pprint
-import threading
 
 
 # Константы
@@ -19,6 +18,8 @@ SETTINGS_FILE = os.path.join(data_dir, "settings.json")
 HISTORY_FILE = os.path.join(data_dir, "history.json")
 QUEUE_FILE = os.path.join(data_dir, "queue.json")
 
+def gen_uid(string: str):
+    return str(hash(string))
 
 class VideoDownloader:
     def __init__(self):
@@ -105,18 +106,27 @@ class VideoDownloader:
                 queue.append(s)
             json.dump(queue, f, indent=2)
 
-    def add_to_history(self, url: str, title: str, format_id: str, filepath: str):
+    def add_to_history(self, url: str, fmt: dict):
+        #title: str, format_id: str, filepath: str
+
         self.history.append({
             "url": url,
-            "title": title,
-            "format_id": format_id,
-            "filepath": filepath,
+            "title": fmt['title'],
+            "format_id": fmt['format_id'],
+            "filepath": fmt['filepath'],
+            "thumbnail": fmt['thumbnail'],
             "timestamp": datetime.now().isoformat()
         })
         self.save_history()
 
-    def add_to_queue(self, url: str, title: str, format_id: str):
-        uid = str(hash(url+format_id))
+    def add_to_queue(self, url: str, fmt: dict):
+        # url: str, title: str, format_id: str
+        # title, format_id
+        title = fmt['title']
+        format_id = fmt['format_id']
+        thumbnail = fmt['thumbnail']
+
+        uid = gen_uid(url+format_id)
         self.queue.insert(0, {
             "url": url,
             "uid": uid,
@@ -124,6 +134,7 @@ class VideoDownloader:
             "format_id": format_id,
             "status": "pending",
             "timestamp": datetime.now().isoformat(),
+            "thumbnail": thumbnail,
             "progress": ft.ProgressBar(visible=True, bar_height=2),
         })
         self.save_queue()
@@ -137,29 +148,34 @@ class VideoDownloader:
             with yt_dlp.YoutubeDL(ydl_opts) as ydl:
                 info = ydl.extract_info(url, download=False)
                 formats = []
+                #print(" ")
                 #pprint(info)
+                #print(" ")
+                thumbnail = info.get('thumbnail')
                 for f in info['formats']:
-                    pprint(f)
+                    #pprint(f)
                     if (f.get('format_note') or f.get('format')) and f.get('ext'):
-                        #uid = str(hash(url+f['format_id']))
+                        #uid = gen_uid(url+f['format_id'])
                         formats.append({
                             'format_id': f['format_id'],
-                            #'uid': uid,
+                            'uid': gen_uid(url+f['format_id']),
                             'title': info.get('title'),
                             'ext': f['ext'],
                             'format_note': (f.get('format_note') or f.get('format')),
                             'filesize': f.get('filesize'),
                             'fps': f.get('fps'),
                             'progress': ft.ProgressBar(visible=True, value=0, bar_height=2),
-                            'thumbnail': f.get('thumbnail'),
+                            'thumbnail': thumbnail,
                         })
                 return sorted(formats, key=lambda x: (x['filesize'] or 0), reverse=True)
         except Exception as e:
-            print(f"!Error fetching formats: {e}")
+            #print(f"!Error fetching formats: {e}")
             return []
 
-    def download_video(self, url: str, format_id: str) -> bool:
-        uid=str(hash(url+format_id))
+    def download_video(self, url: str, fmt: dict) -> bool:
+        # format_id: str
+        format_id = fmt['format_id']
+        uid=gen_uid(url+format_id)
         if not self.settings["download_path"]:
             self.show_snackbar("Укажите папку для сохранения в настройках!")
             return False
@@ -175,13 +191,15 @@ class VideoDownloader:
                 info = ydl.extract_info(url, download=True)
                 title = info.get('title', 'Unknown Title')
                 filepath = ydl.prepare_filename(info)
-                self.add_to_history(url, title, format_id, filepath)
+                fmt['title'] = title
+                fmt['filepath'] = filepath
+                self.add_to_history(url, fmt)
                 self.update_queue_status(url, format_id, "completed")
                 self.show_snackbar(f"Скачан успешно: {title}")
                 return True
         except Exception as e:
-            self.update_queue_status(url, format_id, f"!error: {str(e)}")
-            self.show_snackbar(f"Ошибка скачивания: {e}")
+            self.update_queue_status(url, format_id, f"Ошибка скачивания: {str(e)}")
+            self.show_snackbar(f"Ошибка скачивания: {e}", ft.Colors.RED)
             return False
 
     def progress_hook(self, uid):
@@ -202,34 +220,21 @@ class VideoDownloader:
             elif d['status'] == 'finished':
                 for i in (filter(lambda e:e.get('progress') and e['format_id']==d['info_dict']['format_id'] and uid==e['uid'], self.queue)):
                     i['progress'].visible = False
+                self.page.update()
         return _
-
-    def progress_hook1(self, d):
-        if d['status'] == 'downloading':
-            total = d.get('total_bytes') or d.get('total_bytes_estimate') or 1
-            downloaded = d.get('downloaded_bytes', 0)
-            progress = downloaded / total if total else 0
-            progress_bar.value = progress
-            status.value = f"Скачано: {downloaded / 1024:.2f} KB / {total / 1024:.2f} KB"
-            page.update()
-        elif d['status'] == 'finished':
-            progress_bar.value = 1.0
-            status.value = _("Скачивание завершено!")
-            download_button.disabled = False
-            page.update()
 
 
 
     def update_queue_status(self, url: str, format_id: str, status: str):
-        pprint(self.queue)
         for item in self.queue:
             if item["url"] == url and item["format_id"] == format_id:
                 item["status"] = status
                 item["updated"] = datetime.now().isoformat()
+        #pprint(self.queue)
         self.save_queue()
         self.refresh_queue_page()
 
-    def show_snackbar(self, message: str):
+    def show_snackbar(self, message: str, color=None):
         #self.page.snackbar = ft.SnackBar(
         #    content=ft.Text(message),
         #    action="Закрыть",
@@ -239,7 +244,7 @@ class VideoDownloader:
         #self.page.update()
 
         self.page.open(ft.SnackBar(
-            content=ft.Text(message),
+            content=ft.Text(message, color),
             action="Закрыть",
             action_color=ft.Colors.BLUE,
         ))
@@ -307,7 +312,7 @@ class VideoDownloader:
                         title=ft.Text(f"{fmt['format_note']} ({fmt['ext']})"),
                         subtitle=ft.Text(f"Размер: {filesize}, FPS: {fps}"),
                         trailing=ft.Text(fmt['format_id'], size=12, color=ft.Colors.GREY_600),
-                        on_click=lambda e, fmt_id=fmt['format_id']: self.start_download(fmt['title'], fmt_id),
+                        on_click=lambda e, fmt=fmt: self.start_download(e, fmt),
                     )
                 )
 
@@ -341,15 +346,26 @@ class VideoDownloader:
                     content=ft.Container(
                         padding=10,
                         content=ft.Row([
+                            ft.Container(
+                                content=ft.Image(
+                                    src=item.get('thumbnail') or 'No_Image_Available.jpeg',
+                                    width=100,
+                                    height=100,
+                                    fit=ft.ImageFit.CONTAIN,
+                                ),
+                                on_click=lambda e, filevideo=item['filepath']: self.play_video(e, filevideo),
+                                ink=True,
+                                border_radius=ft.border_radius.all(10)
+                            ),
                             ft.Column([
                                 ft.Text(item["title"], weight=ft.FontWeight.BOLD),
                                 ft.Text(f"Формат: {item['format_id']}", size=12),
-                                ft.TextButton(
+                                ft.Text(
                                     f"Файл: {os.path.basename(item['filepath'])}",
-                                    #size=12,
-                                    #color=ft.Colors.BLUE_400,
-                                    #no_wrap=True,
-                                    on_click=lambda e, filevideo=item['filepath']: self.play_video(e, filevideo)
+                                    size=12,
+                                    color=ft.Colors.BLUE_400,
+                                    no_wrap=True,
+                                    #on_click=lambda e, filevideo=item['filepath']: self.play_video(e, filevideo)
                                 ),
                                 ft.Text(
                                     f"!Дата: {datetime.fromisoformat(item['timestamp']).strftime('%d.%m.%Y %H:%M')}",
@@ -506,30 +522,30 @@ class VideoDownloader:
 
 
     def play_video(self, e: ft.ControlEvent, filevideo: str):
-
-        print(filevideo)
-
         def close(e):
             self.page.close(self.page.dialog)
             self.page.dialog.open = False
             self.page.update()
 
-        video_player = ftv.Video(
-            title=os.path.basename(filevideo),
-            playlist=ftv.VideoMedia(resource=filevideo),
-            autoplay=True,
-        )
+        if os.path.exists(filevideo):
+            video_player = ftv.Video(
+                title=os.path.basename(filevideo),
+                playlist=ftv.VideoMedia(resource=filevideo),
+                autoplay=True,
+            )
+        else:
+            video_player = ft.Text(f"Файл не найден {filevideo}")
 
         self.page.dialog = ft.AlertDialog(
-            title=ft.Text("play_video: "+os.path.basename(filevideo)),
+            #title=ft.Text("play_video: "+os.path.basename(filevideo)),
             content=ft.Container(
                 content=video_player,
-                width=400,
-                height=300,
+                #width=400,
+                #height=300,
             ),
-            actions=[
-                ft.ElevatedButton("Close", on_click=close),
-            ],
+            #actions=[
+            #    ft.ElevatedButton("Close", on_click=close),
+            #],
             #modal=True,
         )
 
@@ -608,21 +624,13 @@ class VideoDownloader:
         else:
             self.show_snackbar("Не удалось получить форматы. Проверьте ссылку.")
 
-    def start_download(self, title:str, format_id: str):
+    def start_download(self, e: ft.ControlEvent, fmt: dict):
         # Добавляем в очередь
-        self.add_to_queue(self.current_url, title, format_id)
-        
+        self.add_to_queue(self.current_url, fmt)
         # Переходим на страницу очереди
         self.page.go("/queue")
-        
         # Запускаем скачивание в отдельном потоке, чтобы не блокировать UI
-        self.page.run_thread(self.download_video, self.current_url, format_id)
-        
-        #def download_task():
-        #    self.download_video(self.current_url, format_id)
-        #
-        #thread = threading.Thread(target=download_task)
-        #thread.start()
+        self.page.run_thread(self.download_video, self.current_url, fmt)
 
     def clear_history(self, e):
         self.history.clear()
