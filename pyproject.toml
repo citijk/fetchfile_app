@@ -14,6 +14,8 @@ dependencies = [
   "pyjnius",
   "aiofiles",
   "flet-webview==0.1.0",
+  "flet-video==0.1.1",
+  "flet-audio==0.1.0",
   
 ]
 

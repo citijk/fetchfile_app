@@ -1,4 +1,5 @@
 import flet as ft
+import flet_video as ftv
 import yt_dlp
 import os
 import json
@@ -176,7 +177,7 @@ class VideoDownloader:
                 filepath = ydl.prepare_filename(info)
                 self.add_to_history(url, title, format_id, filepath)
                 self.update_queue_status(url, format_id, "completed")
-                self.show_snackbar(f"Скачать успешно: {title}")
+                self.show_snackbar(f"Скачан успешно: {title}")
                 return True
         except Exception as e:
             self.update_queue_status(url, format_id, f"!error: {str(e)}")
@@ -335,6 +336,7 @@ class VideoDownloader:
             )
 
             for idx, item in enumerate(reversed(self.history)):  # показываем новые сверху
+
                 card = ft.Card(
                     content=ft.Container(
                         padding=10,
@@ -342,11 +344,12 @@ class VideoDownloader:
                             ft.Column([
                                 ft.Text(item["title"], weight=ft.FontWeight.BOLD),
                                 ft.Text(f"Формат: {item['format_id']}", size=12),
-                                ft.Text(
+                                ft.TextButton(
                                     f"Файл: {os.path.basename(item['filepath'])}",
-                                    size=12,
-                                    color=ft.Colors.BLUE_400,
-                                    no_wrap=True,
+                                    #size=12,
+                                    #color=ft.Colors.BLUE_400,
+                                    #no_wrap=True,
+                                    on_click=lambda e, filevideo=item['filepath']: self.play_video(e, filevideo)
                                 ),
                                 ft.Text(
                                     f"!Дата: {datetime.fromisoformat(item['timestamp']).strftime('%d.%m.%Y %H:%M')}",
@@ -354,6 +357,7 @@ class VideoDownloader:
                                     color=ft.Colors.GREY_600
                                 ),
                             ], expand=True),
+
                             ft.IconButton(
                                 icon=ft.Icons.DELETE_OUTLINE,
                                 icon_color=ft.Colors.RED_400,
@@ -501,6 +505,38 @@ class VideoDownloader:
         )
 
 
+    def play_video(self, e: ft.ControlEvent, filevideo: str):
+
+        print(filevideo)
+
+        def close(e):
+            self.page.close(self.page.dialog)
+            self.page.dialog.open = False
+            self.page.update()
+
+        video_player = ftv.Video(
+            title=os.path.basename(filevideo),
+            playlist=ftv.VideoMedia(resource=filevideo),
+            autoplay=True,
+        )
+
+        self.page.dialog = ft.AlertDialog(
+            title=ft.Text("play_video: "+os.path.basename(filevideo)),
+            content=ft.Container(
+                content=video_player,
+                width=400,
+                height=300,
+            ),
+            actions=[
+                ft.ElevatedButton("Close", on_click=close),
+            ],
+            #modal=True,
+        )
+
+        self.page.open(self.page.dialog)
+        self.page.dialog.open = True
+        self.page.update()
+        #video_player.playlist_add(ftv.VideoMedia(filevideo))
 
     def delete_history_item(self, index: int):
         # Получаем реальный индекс в исходном списке (т.к. показываем reversed)
@@ -580,11 +616,13 @@ class VideoDownloader:
         self.page.go("/queue")
         
         # Запускаем скачивание в отдельном потоке, чтобы не блокировать UI
-        def download_task():
-            self.download_video(self.current_url, format_id)
+        self.page.run_thread(self.download_video, self.current_url, format_id)
         
-        thread = threading.Thread(target=download_task)
-        thread.start()
+        #def download_task():
+        #    self.download_video(self.current_url, format_id)
+        #
+        #thread = threading.Thread(target=download_task)
+        #thread.start()
 
     def clear_history(self, e):
         self.history.clear()
