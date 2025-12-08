@@ -29,15 +29,15 @@ copyright = "FetchFile (C) 2025"
 path = "src"
 
 [tool.flet.splash]
-android = false
-web = false
+android = true
+web = true
 
 [tool.flet.app.startup_screen]
-show = false
+show = true
 message = "Starting up the app…"
 
 [tool.flet.app.boot_screen]
-show = false
+show = true
 message = "Preparing the app for its first launch…"
 
 

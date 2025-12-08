@@ -9,6 +9,8 @@ from pprint import pprint
 
 import flet as ft
 
+#https://gallery.flet.dev/icons-browser/
+
 # Константы
 APP_NAME = "Video Downloader"
 
