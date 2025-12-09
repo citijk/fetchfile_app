@@ -33,7 +33,7 @@ android = true
 web = true
 
 [tool.flet.app.startup_screen]
-show = false
+show = true
 message = "Starting up the app…"
 
 [tool.flet.app.boot_screen]
