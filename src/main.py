@@ -6,6 +6,8 @@ import json
 from datetime import datetime
 from typing import List, Dict, Optional
 from pprint import pprint
+import hashlib
+import random
 
 import flet as ft
 
@@ -21,8 +23,102 @@ SETTINGS_FILE = os.path.join(data_dir, "settings.json")
 HISTORY_FILE = os.path.join(data_dir, "history.json")
 QUEUE_FILE = os.path.join(data_dir, "queue.json")
 
+def stable_string_hash(input_string, algorithm='sha1'):
+    """
+    Generates a stable hash for a string using a specified cryptographic algorithm.
+
+    Args:
+        input_string (str): The string to be hashed.
+        algorithm (str): The name of the hashing algorithm (e.g., 'md5', 'sha1', 'sha256', 'sha512').
+
+    Returns:
+        str: The hexadecimal representation of the stable hash.
+    """
+    # Ensure the input is encoded to bytes, as hashlib functions expect bytes
+    encoded_string = input_string.encode('utf-8')
+
+    # Get the hash object for the specified algorithm
+    hasher = hashlib.new(algorithm)
+
+    # Update the hasher with the encoded string
+    hasher.update(encoded_string)
+
+    # Return the hexadecimal digest of the hash
+    return hasher.hexdigest()
+
 def gen_uid(string: str):
-    return str(hash(string))
+    return str(stable_string_hash(string))
+
+def rand_uid():
+    return random.getrandbits(100)
+
+class ForceDownloadClass:
+    def start_download(self, e: ft.ControlEvent, fmt: dict):
+        # Добавляем в очередь
+        self.add_to_queue(self.current_url, fmt)
+        # Переходим на страницу очереди
+        self.page.go("/queue")
+        
+        # Запускаем скачивание с повторами в отдельном потоке
+        self.page.run_thread(
+            self.download_with_retries,
+            self.current_url,
+            fmt,
+            max_retries=3,      # макс. число попыток
+            delay_seconds=5     # задержка между попытками (сек)
+        )
+
+    def download_with_retries(
+        self,
+        url: str,
+        fmt: dict,
+        max_retries: int = 3,
+        delay_seconds: int = 5
+    ):
+        """
+        Выполняет download_video с повторными попытками при ошибках.
+        """
+        for attempt in range(1, max_retries + 1):
+            try:
+                self.download_video(url, fmt)
+                # Если успешно — выходим из цикла
+                return
+            except Exception as exc:
+                # Логируем ошибку
+                print(f"Попытка {attempt} не удалась: {exc}")
+                
+                # Если это последняя попытка — поднимаем исключение
+                if attempt == max_retries:
+                    print("Все попытки исчерпаны. Загрузка не удалась.")
+                    # Можно обновить UI: показать ошибку пользователю
+                    self.update_ui_on_failure(url, exc)
+                    return
+                
+                # Ждём перед следующей попыткой
+                time.sleep(delay_seconds)
+
+    def download_video(self, url: str, fmt: dict):
+        """
+        Основная логика скачивания (пример).
+        Должна выбрасывать исключение при ошибке.
+        """
+        # Здесь ваш код скачивания
+        # Если ошибка — raise Exception("...")
+        pass
+
+    def update_ui_on_failure(self, url: str, error: Exception):
+        """
+        Обновляет UI при окончательной неудаче.
+        Например, меняет статус в очереди, показывает уведомление.
+        """
+        # Пример: обновить элемент в очереди
+        for item in self.queue_items:
+            if item.url == url:
+                item.status = f"Ошибка: {str(error)}"
+                break
+        
+        # Обновить интерфейс
+        self.page.update()
 
 class VideoDownloader:
     def __init__(self):
@@ -90,13 +186,20 @@ class VideoDownloader:
 
     def load_queue(self) -> List[Dict]:
         if os.path.exists(QUEUE_FILE):
-            with open(QUEUE_FILE, "r", encoding="utf-8") as f:
-                q = json.load(f)
-                for e in q:
-                    if 'status' in e and e['status']=='pending':
-                        e['status'] = 'cancelled'
-                #        e.setdefault('progress', ft.ProgressBar(visible=True, bar_height=2))
-                return q
+            try:
+                with open(QUEUE_FILE, "r", encoding="utf-8") as f:
+                    q = json.load(f)
+                    for e in q:
+                        if 'status' in e and e['status']=='pending':
+                            e['status'] = 'cancelled'
+                        if 'progress' in e:
+                            #visible = bool(e['progress'] and e['progress'] != 1)
+                            e['progress'] = ft.ProgressBar(visible=False, bar_height=2, value=e['progress'])
+                        else:
+                            e.setdefault('progress', ft.ProgressBar(visible=False, bar_height=2))
+                    return q
+            except:
+                return []
         return []
 
     def save_queue(self):
@@ -105,7 +208,8 @@ class VideoDownloader:
             for e in self.queue:
                 s = e.copy()
                 if 'progress' in s:
-                    del s['progress']
+                    s['progress'] = s['progress'].value
+                    #del s['progress']
                 queue.append(s)
             json.dump(queue, f, indent=2)
 
@@ -117,7 +221,7 @@ class VideoDownloader:
             "title": fmt['title'],
             "format_id": fmt['format_id'],
             "filepath": fmt['filepath'],
-            "thumbnail": fmt['thumbnail'],
+            "thumbnail": fmt.get('thumbnail'),
             "timestamp": datetime.now().isoformat()
         })
         self.save_history()
@@ -183,6 +287,12 @@ class VideoDownloader:
             self.show_snackbar("Укажите папку для сохранения в настройках!")
             return False
 
+        for item in self.queue:
+            if item["uid"] == uid:
+                item['progress'].visible = True
+                item['progress'].value=None
+        self.page.update()
+
         ydl_opts = {
             'format': format_id,
             'outtmpl': os.path.join(self.settings["download_path"], '%(title)s_%(format_id)s.%(ext)s'),
@@ -203,6 +313,7 @@ class VideoDownloader:
         except Exception as e:
             self.update_queue_status(url, format_id, f"Ошибка скачивания: {str(e)}")
             self.show_snackbar(f"Ошибка скачивания: {e}", ft.Colors.RED)
+            #raise Exception(f"Ошибка скачивания: {str(e)}")
             return False
 
     def progress_hook(self, uid):
@@ -215,7 +326,7 @@ class VideoDownloader:
                 downloaded = d.get('downloaded_bytes', 0)
                 progress = downloaded / total if total else 0
                 #self.progress.value = progress
-                for i in (filter(lambda e:e.get('progress') and e['format_id']==d['info_dict']['format_id'] and uid==e['uid'], self.queue)):
+                for i in (filter(lambda e: e['format_id']==d['info_dict']['format_id'] and uid==e['uid'], self.queue)):
                     i['progress'].value = progress
 
                 self.page.session.set("download_progress", percent)
@@ -223,6 +334,7 @@ class VideoDownloader:
             elif d['status'] == 'finished':
                 for i in (filter(lambda e:e.get('progress') and e['format_id']==d['info_dict']['format_id'] and uid==e['uid'], self.queue)):
                     i['progress'].visible = False
+                    i['progress'].value = 1
                 self.page.update()
         return _
 
@@ -399,7 +511,10 @@ class VideoDownloader:
                                 tooltip="Удалить запись",
                                 on_click=lambda e, i=idx: self.delete_history_item(i),
                             ),
-                        ], alignment=ft.MainAxisAlignment.SPACE_BETWEEN)
+                        ],
+                            alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
+                            #vertical_alignment=ft.CrossAxisAlignment.START,  # Выравниваем по верху
+                        )
                     )
                 )
                 list_view.controls.append(card)
@@ -443,14 +558,27 @@ class VideoDownloader:
                             ft.Colors.RED if "cancelled" in item["status"] else \
                             ft.Colors.ORANGE
 
-
-                #self.progress.width=(self.page.width/2 if self.page.width >400 else self.page.width)
+                if item['status'] != 'completed':
+                    IconButton = ft.IconButton(
+                                icon=ft.Icons.REPLAY,
+                                icon_color=ft.Colors.BLUE_400,
+                                tooltip="Повторить загрузку",
+                                on_click=lambda e, fmt=item: self.retry_download(e, fmt),
+                            )
+                else:
+                    IconButton = ft.Text()
+                    ft.IconButton(
+                        icon=ft.Icons.DOWNLOAD_DONE,
+                        icon_color=ft.Colors.GREEN,
+                        tooltip="Завершено",
+                    )
 
                 list_view.controls.append(
                     ft.Card(
-                        content=ft.Container(
-                            padding=10,
-                            content=ft.Column([
+                    content=ft.Container(
+                        padding=10,
+                        content=ft.Row([
+                            ft.Column([
                                 ft.Text(os.path.basename(item.get("title", "Неизвестно")), weight=ft.FontWeight.BOLD),
                                 ft.Text(f"Формат: {item['format_id']}", size=12),
                                 ft.Text(f"Статус: {item['status']}", size=12, color=status_color),
@@ -459,10 +587,18 @@ class VideoDownloader:
                                     size=10,
                                     color=ft.Colors.GREY_600
                                 ),
-                                item['progress'] if 'progress' in item else ft.ProgressBar(visible=False, bar_height=2),
-                            ])
+                                item['progress'],
+                            ], expand=True),
+
+                            IconButton,
+                        ],
+                            alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
+                            #vertical_alignment=ft.CrossAxisAlignment.START,  # Выравниваем по верху
                         )
                     )
+                )
+
+
                 )
 
             controls.append(list_view)
@@ -645,6 +781,9 @@ class VideoDownloader:
             self.page.go("/formats")
         else:
             self.show_snackbar("Не удалось получить форматы. Проверьте ссылку.")
+
+    def retry_download(self, e: ft.ControlEvent, fmt: dict):
+        self.page.run_thread(self.download_video, fmt['url'], fmt)
 
     def start_download(self, e: ft.ControlEvent, fmt: dict):
         # Добавляем в очередь
