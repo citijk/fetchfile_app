@@ -558,7 +558,7 @@ class VideoDownloader:
                             ft.Colors.RED if "cancelled" in item["status"] else \
                             ft.Colors.ORANGE
 
-                if item['status'] != 'completed':
+                if not ('pending', 'completed') in item['status']:
                     IconButton = ft.IconButton(
                                 icon=ft.Icons.REPLAY,
                                 icon_color=ft.Colors.BLUE_400,
