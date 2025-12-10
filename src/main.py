@@ -8,6 +8,7 @@ from typing import List, Dict, Optional
 from pprint import pprint
 import hashlib
 import random
+import threading
 
 import flet as ft
 
@@ -382,7 +383,8 @@ class VideoDownloader:
                         ),
                         ft.ElevatedButton(
                             "Получить форматы",
-                            on_click=lambda e: self.page.run_thread(self.fetch_formats, e),
+                            #on_click=lambda e: self.page.run_thread(self.fetch_formats, e),
+                            on_click=lambda e: threading.Thread(target=self.fetch_formats, args=[e], daemon=True).start(),
                             disabled=True,
                             expand=True,
                         ),
@@ -558,7 +560,7 @@ class VideoDownloader:
                             ft.Colors.RED if "cancelled" in item["status"] else \
                             ft.Colors.ORANGE
 
-                if not ('pending', 'completed') in item['status']:
+                if not item['status'] in ('pending', 'completed'):
                     IconButton = ft.IconButton(
                                 icon=ft.Icons.REPLAY,
                                 icon_color=ft.Colors.BLUE_400,
@@ -783,7 +785,8 @@ class VideoDownloader:
             self.show_snackbar("Не удалось получить форматы. Проверьте ссылку.")
 
     def retry_download(self, e: ft.ControlEvent, fmt: dict):
-        self.page.run_thread(self.download_video, fmt['url'], fmt)
+        #self.page.run_thread(self.download_video, fmt['url'], fmt)
+        threading.Thread(target=self.download_video, args=(fmt['url'], fmt), daemon=True).start()
 
     def start_download(self, e: ft.ControlEvent, fmt: dict):
         # Добавляем в очередь
@@ -791,7 +794,8 @@ class VideoDownloader:
         # Переходим на страницу очереди
         self.page.go("/queue")
         # Запускаем скачивание в отдельном потоке, чтобы не блокировать UI
-        self.page.run_thread(self.download_video, self.current_url, fmt)
+        #self.page.run_thread(self.download_video, self.current_url, fmt)
+        threading.Thread(target=self.download_video, args=(self.current_url, fmt), daemon=True).start()
 
     def clear_history(self, e):
         self.history.clear()
