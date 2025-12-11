@@ -27,6 +27,11 @@ SETTINGS_FILE = os.path.join(data_dir, "settings.json")
 HISTORY_FILE = os.path.join(data_dir, "history.json")
 QUEUE_FILE = os.path.join(data_dir, "queue.json")
 
+FFMPEG_PATH = os.path.join(os.path.dirname(__file__), 'assets', 'bin', 'ffmpeg')
+
+#--ffmpeg-location
+
+
 def stable_string_hash(input_string, algorithm='sha1'):
     """
     Generates a stable hash for a string using a specified cryptographic algorithm.
@@ -389,7 +394,7 @@ class VideoDownloader:
                             "Получить форматы",
                             #on_click=lambda e: self.page.run_thread(self.fetch_formats, e),
                             on_click=lambda e: threading.Thread(target=self.fetch_formats, args=[e], daemon=True).start(),
-                            disabled=True,
+                            #disabled=True,
                             expand=True,
                         ),
                     ],
@@ -781,18 +786,19 @@ class VideoDownloader:
             self.show_snackbar("Введите ссылку!")
             return
         e.control.content = ft.ProgressRing(width=20, height=20, stroke_width=2, disabled=True)
-        e.control.disabled=True
+        #e.control.disabled=True
         self.page.update()
 
         self.formats = self.get_formats(self.current_url)
         
-        e.control.disabled=False
+        #e.control.disabled=False
         e.control.content = None
         self.page.update()
 
         if self.formats:
             self.page.go("/formats")
         else:
+            self.page.go("/formats")
             self.show_snackbar("Не удалось получить форматы. Проверьте ссылку.")
 
     def retry_download(self, e: ft.ControlEvent, fmt: dict):
