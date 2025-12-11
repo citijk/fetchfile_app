@@ -712,6 +712,7 @@ class VideoDownloader:
             #modal=True,
         )
 
+
         self.page.open(self.page.dialog)
         self.page.dialog.open = True
         self.page.update()
