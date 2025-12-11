@@ -320,6 +320,7 @@ class VideoDownloader:
     def progress_hook(self, uid):
         def _(d):
             #pprint(d)
+            #https://rutube.ru/video/6f27ea5aebdea7445203679d8f1d508d/
             if d['status'] == 'downloading':
 
                 percent = d.get('_percent_str', '0%')
@@ -700,6 +701,8 @@ class VideoDownloader:
                 content=video_player,
                 expand=True,
                 alignment=ft.alignment.center,
+                width=self.page.width * 0.8,
+                height=self.page.height * 0.7,
                 #width=400,
                 #height=300,
             ),
@@ -778,6 +781,10 @@ class VideoDownloader:
         self.page.update()
 
         self.formats = self.get_formats(self.current_url)
+        
+        e.control.disabled=False
+        e.control.content = None
+        self.page.update()
 
         if self.formats:
             self.page.go("/formats")
