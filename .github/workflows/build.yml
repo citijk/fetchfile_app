@@ -44,7 +44,7 @@ jobs:
           pip install --no-cache-dir --break-system-packages "flet[all]==0.28.3"
 
       - name: Build APK
-        run: flet build aab --android-signing-key-store-password "${{ $secrets.ANDROID_STORE_PASSWORD }}" --android-signing-key-password "${{ secrets.ANDROID_KEY_PASSWORD }}"
+        run: flet build aab --android-signing-key-store-password "${{ secrets.ANDROID_STORE_PASSWORD }}" --android-signing-key-password "${{ secrets.ANDROID_KEY_PASSWORD }}"
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
