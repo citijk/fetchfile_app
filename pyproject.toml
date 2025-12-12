@@ -51,7 +51,8 @@ message = "Preparing the app for its first launch…"
 "android.permission.READ_EXTERNAL_STORAGE" = true
 
 
-#[tool.flet.android]
+[tool.flet.android]
+signing.key_alias = "/Users/z/upload-keystore.jks"
 #dependencies = [
 #    "pyjnius"
 #]
