@@ -52,7 +52,8 @@ message = "Preparing the app for its first launch…"
 
 
 [tool.flet.android]
-signing.key_alias = "/Users/z/upload-keystore.jks"
+signing.key_alias = "./upload-keystore.jks"
+#signing.key_alias = "/__w/fetchfile_app/fetchfile_app/upload-keystore.jks"
 #dependencies = [
 #    "pyjnius"
 #]
