@@ -35,7 +35,7 @@ jobs:
           echo "ls /usr/lib/jvm/"
           pwd
           echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 -d > upload-keystore.jks
-          md5 upload-keystore.jks
+          md5sum upload-keystore.jks
           ls
           ls /usr/lib/jvm/
           flutter --version
