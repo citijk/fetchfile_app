@@ -1,6 +1,6 @@
 [project]
 name = "fetchfile"
-version = "2.1.1"
+version = "2.1.2"
 description = ""
 readme = "README.md"
 requires-python = ">=3.9"
@@ -51,7 +51,8 @@ message = "Preparing the app for its first launch…"
 "android.permission.READ_EXTERNAL_STORAGE" = true
 
 [tool.flet.android.signing]
-key_alias = "/__w/fetchfile_app/fetchfile_app/upload-keystore.jks"
+key_store = "/__w/fetchfile_app/fetchfile_app/upload-keystore.jks"
+key_alias = "upload"
 
 
 [tool.flet.android]

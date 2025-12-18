@@ -25,9 +25,9 @@ jobs:
       FLUTTER_HOME: /usr/local/flutter
       FLUTTER_VERSION: 3.29.2
       PATH: /usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/opt/android-sdk-linux/cmdline-tools/latest/bin:/opt/android-sdk-linux/platform-tools:/opt/android-sdk-linux/emulator:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/opt/android-sdk-linux/cmdline-tools/latest/bin:/opt/android-sdk-linux/platform-tools:/opt/android-sdk-linux/emulator:/usr/local/flutter/bin:/usr/local/flutter/bin/cache/dart-sdk/bin
-      ANDROID_SIGNING_KEY_PASSWORD: "${{ secrets.ANDROID_KEY_PASSWORD }}"
-      ANDROID_SIGNING_KEY_STORE_PASSWORD: "${{ secrets.ANDROID_STORE_PASSWORD }}"
-      ANDROID_SIGNING_KEY_ALIAS: "upload"
+      FLET_ANDROID_SIGNING_KEY_PASSWORD: "${{ secrets.ANDROID_KEY_PASSWORD }}"
+      FLET_ANDROID_SIGNING_KEY_STORE_PASSWORD: "${{ secrets.ANDROID_STORE_PASSWORD }}"
+      FLET_ANDROID_SIGNING_KEY_ALIAS: "upload"
 
     steps:
       - uses: actions/checkout@v3
@@ -47,7 +47,7 @@ jobs:
 
       - name: Build APK
         run: |
-            flet build apk # --android-signing-key-store-password "${{ secrets.ANDROID_STORE_PASSWORD }}" --android-signing-key-password "${{ secrets.ANDROID_KEY_PASSWORD }}"
+            flet build --compile-packages --compile-app --cleanup-app apk # --android-signing-key-store-password "${{ secrets.ANDROID_STORE_PASSWORD }}" --android-signing-key-password "${{ secrets.ANDROID_KEY_PASSWORD }}"
             pwd
             md5sum upload-keystore.jks
             echo -n "${{ secrets.ANDROID_STORE_PASSWORD }}" | md5sum

@@ -307,6 +307,7 @@ class VideoDownloader:
             'format': format_id,
             'outtmpl': os.path.join(self.settings["download_path"], '%(title)s_%(format_id)s.%(ext)s'),
             'progress_hooks': [self.progress_hook(uid)],
+            'ffmpeg_location': FFMPEG_PATH,
         }
 
         try:
