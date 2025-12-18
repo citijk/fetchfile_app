@@ -50,10 +50,15 @@ message = "Preparing the app for its first launch…"
 "android.permission.WRITE_EXTERNAL_STORAGE" = true
 "android.permission.READ_EXTERNAL_STORAGE" = true
 
+[tool.flet.android.signing]
+key_alias = "/__w/fetchfile_app/fetchfile_app/upload-keystore.jks"
+
 
 [tool.flet.android]
+split_per_abi = true
+
 #signing.key_alias = "./upload-keystore.jks"
-signing.key_alias = "/__w/fetchfile_app/fetchfile_app/upload-keystore.jks"
+#signing.key_alias = "/__w/fetchfile_app/fetchfile_app/upload-keystore.jks"
 #dependencies = [
 #    "pyjnius"
 #]
