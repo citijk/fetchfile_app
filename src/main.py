@@ -310,6 +310,7 @@ class VideoDownloader:
             'ffmpeg_location': FFMPEG_PATH,
         }
 
+
         try:
             with yt_dlp.YoutubeDL(ydl_opts) as ydl:
                 info = ydl.extract_info(url, download=True)
