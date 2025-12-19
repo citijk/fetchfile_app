@@ -7,11 +7,11 @@ import threading
 
 import flet as ft
 import flet_video as ftv
+import importlib.metadata
 
 from datetime import datetime
 from typing import List, Dict, Optional
 from pprint import pprint
-
 
 #https://gallery.flet.dev/icons-browser/
 
@@ -61,6 +61,37 @@ def gen_uid(string: str):
 
 def rand_uid():
     return random.getrandbits(100)
+
+
+# Function to check the latest version on GitHub
+def check_for_updates(page: ft.Page):
+    repo_owner = "your_username"
+    repo_name = "your_repo"
+
+    try:
+        current_version = importlib.metadata.version("my_app")
+    except importlib.metadata.PackageNotFoundError:
+        current_version = "Version not found (running in development?)"
+
+
+    try:
+        api_url = f"api.github.com{repo_owner}/{repo_name}/releases/latest"
+        response = requests.get(api_url)
+        response.raise_for_status()
+        release_info = response.json()
+        latest_version = release_info['tag_name']
+
+        if latest_version != current_version:
+            # Logic to display update UI in Flet
+            page.snack_bar = ft.SnackBar(ft.Text(f"Update available: {latest_version}!"), open=True)
+            page.update()
+            # Here you would add logic to download the asset and initiate replacement
+        else:
+            print("App is up to date.")
+
+    except requests.exceptions.RequestException as e:
+        print(f"Could not check for updates: {e}")
+
 
 class ForceDownloadClass:
     def start_download(self, e: ft.ControlEvent, fmt: dict):
