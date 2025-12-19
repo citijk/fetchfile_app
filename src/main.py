@@ -4,10 +4,12 @@ import json
 import hashlib
 import random
 import threading
+import base64
 
 import flet as ft
 import flet_video as ftv
-import importlib.metadata
+#from flet_svg import FletSvg
+#import importlib.metadata
 
 from datetime import datetime
 from typing import List, Dict, Optional
@@ -29,6 +31,24 @@ HISTORY_FILE = os.path.join(data_dir, "history.json")
 QUEUE_FILE = os.path.join(data_dir, "queue.json")
 
 FFMPEG_PATH = os.path.join(os.path.dirname(__file__), 'assets', 'bin', 'ffmpeg')
+
+    # 1. Словарь соответствия: (Тип + Качество) -> Строка format для yt-dlp
+FORMAT_MAP = {
+    # MP4 (H.264 + AAC для макс. совместимости)
+    "mp4_best": "bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best",
+    "mp4_mid": "bestvideo[height<=720][ext=mp4]+bestaudio[ext=m4a]/best[height<=720][ext=mp4]",
+    "mp4_low": "bestvideo[height<=360][ext=mp4]+bestaudio[ext=m4a]/best[height<=360][ext=mp4]",
+    
+    # MKV (Любые кодеки, макс. качество)
+    "mkv_best": "bestvideo+bestaudio/best",
+    "mkv_mid": "bestvideo[height<=720]+bestaudio/best[height<=720]",
+    "mkv_low": "bestvideo[height<=360]+bestaudio/best[height<=360]",
+
+    # Аудио (M4A - нативно, MP3/OGG - через постпроцессор)
+    "m4a_best": "bestaudio[ext=m4a]/best",
+    "mp3_best": "bestaudio/best",
+    "ogg_best": "bestaudio[acodec=libopus]/bestaudio/best",
+}
 
 #--ffmpeg-location
 
@@ -300,15 +320,19 @@ class VideoDownloader:
                 #pprint(info)
                 #print(" ")
                 thumbnail = info.get('thumbnail')
-                for f in info['formats']:
+                f={}
+                for key, val in FORMAT_MAP.items():
+                    f['ext'] = key.split('_')[0]
+                    f['format_note'] = " ".join(key.split('_'))
+                #for f in info['formats']:
                     #pprint(f)
                     if (f.get('format_note') or f.get('format')) and f.get('ext'):
                         #uid = gen_uid(url+f['format_id'])
                         formats.append({
-                            'format_id': f['format_id'],
-                            'uid': gen_uid(url+f['format_id']),
+                            'format_id': key,
+                            'uid': gen_uid(url+key),
                             'title': info.get('title'),
-                            'ext': f['ext'],
+                            'ext': f.get('ext'),
                             'format_note': (f.get('format_note') or f.get('format')),
                             'filesize': f.get('filesize'),
                             'fps': f.get('fps'),
@@ -335,13 +359,24 @@ class VideoDownloader:
         self.page.update()
 
         ydl_opts = {
-            'format': format_id,
+            'format': FORMAT_MAP[format_id], #format_id,
             'outtmpl': os.path.join(self.settings["download_path"], '%(title)s_%(format_id)s.%(ext)s'),
             'progress_hooks': [self.progress_hook(uid)],
             'ffmpeg_location': FFMPEG_PATH,
         }
 
-
+        if "mp3" in format_id:
+            ydl_opts['postprocessors'] = [{
+                'key': 'FFmpegExtractAudio',
+                'preferredcodec': 'mp3',
+                'preferredquality': '192',
+            }]
+        elif "ogg" in format_id:
+            ydl_opts['postprocessors'] = [{
+                'key': 'FFmpegExtractAudio',
+                'preferredcodec': 'vorbis',
+                'preferredquality': '192',
+            }]
 
         try:
             with yt_dlp.YoutubeDL(ydl_opts) as ydl:
@@ -413,6 +448,74 @@ class VideoDownloader:
     # --- Страницы приложения ---
 
     def home_page(self):
+
+        def get_svg_icon(ext: str, mode: str = "audio"):
+            """
+            mode: "audio" (нота), "video" (пленка), "muted" (без звука)
+            """
+            colors = {
+                "audio": "#2196F3", # Blue
+                "video": "#F44336", # Red
+                "muted": "#757575", # Grey
+            }
+            
+            bg_color = colors.get(mode, "#2196F3")
+            
+            # Геометрия иконок
+            icons = {
+                "audio": '<path d="M50 20 V65 A10 10 0 1 1 40 55 A10 10 0 0 1 50 65" stroke="white" stroke-width="6" fill="none"/>',
+                "video": '<rect x="30" y="35" width="40" height="30" rx="2" stroke="white" stroke-width="5" fill="none"/><path d="M30 35 L70 65 M70 35 L30 65" stroke="white" stroke-width="2" opacity="0.5"/>',
+                "muted": '<path d="M35 40 H45 L55 30 V70 L45 60 H35 V40 Z M65 40 L75 60 M75 40 L65 60" stroke="white" stroke-width="5" fill="none"/>'
+            }
+
+            svg = f'''
+<svg width="100" height="100" viewBox="0 0 100 100" xmlns="www.w3.org">
+    <rect width="100" height="100" rx="20" fill="{bg_color}"/>
+    {icons.get(mode)}
+    <text x="50" y="90" font-family="Arial, sans-serif" font-size="20" font-weight="bold" fill="white" text-anchor="middle">
+{ext.upper()}
+    </text>
+</svg>
+        '''
+            print(svg)
+            return base64.b64encode(svg.encode('utf-8')).decode('utf-8')
+
+        def opt(label, ext, mode):
+            return ft.DropdownOption(
+                text=label,
+                key=ext,
+                leading_icon=ft.Image(
+                    src=f"icons/{ext}.svg",
+                    width=24, height=24
+                )
+            )
+            return ft.DropdownOption(
+                key=ext,
+                text=label,
+                leading_icon=ft.Image(
+                    src_base64=get_svg_icon(ext, mode),
+                    width=24, height=24
+                )
+            )
+
+        dropdown = ft.Dropdown(
+                            label="Формат",
+                            value = "mp4",
+                            content_padding=ft.padding.symmetric(8, 6),
+                            width=400,
+                            options=[
+                                opt("MP3 Аудио (High Quality)", "mp3", "audio"),
+                                opt("OGG Vorbis Аудио", "ogg", "audio"),
+                                
+                                # Видео
+                                opt("MP4 Видео (H.264)", "mp4", "video"),
+                                opt("MKV Видео", "mkv", "video"),
+                                
+                                # Специальные (без звука)
+                                opt("M4A (Только видео / Без звука)", "m4a", "muted"),
+                            ],
+                        )
+
         return ft.View(
             "/",
             [
@@ -425,10 +528,11 @@ class VideoDownloader:
                             expand=True,
                             autofocus=True,
                         ),
+                        dropdown,
                         ft.ElevatedButton(
                             "Получить форматы",
                             #on_click=lambda e: self.page.run_thread(self.fetch_formats, e),
-                            on_click=lambda e: threading.Thread(target=self.fetch_formats, args=[e], daemon=True).start(),
+                            on_click=lambda e: threading.Thread(target=self.fetch_formats, args=[e, dropdown.value], daemon=True).start(),
                             #disabled=True,
                             expand=True,
                         ),
@@ -816,7 +920,8 @@ class VideoDownloader:
         self.page.update()
 
 
-    def fetch_formats(self, e):
+    def fetch_formats(self, e, format_selected):
+        print(format_selected)
         if not self.current_url:
             self.show_snackbar("Введите ссылку!")
             return
