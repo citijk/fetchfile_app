@@ -30,7 +30,7 @@ SETTINGS_FILE = os.path.join(data_dir, "settings.json")
 HISTORY_FILE = os.path.join(data_dir, "history.json")
 QUEUE_FILE = os.path.join(data_dir, "queue.json")
 
-FFMPEG_PATH = os.path.join(os.path.dirname(data_dir), 'assets', 'bin', 'ffmpeg')
+FFMPEG_PATH = os.path.join(os.path.dirname(data_dir), 'src', 'assets', 'bin', 'ffmpeg')
 
     # 1. Словарь соответствия: (Тип + Качество) -> Строка format для yt-dlp
 FORMAT_MAP = {
