@@ -352,6 +352,10 @@ class VideoDownloader:
             self.show_snackbar("Укажите папку для сохранения в настройках!")
             return False
 
+        if not os.path.exists(FFMPEG_PATH):
+            self.show_snackbar(f"not: {FFMPEG_PATH}")
+            return False
+
         for item in self.queue:
             if item["uid"] == uid:
                 item['progress'].visible = True
