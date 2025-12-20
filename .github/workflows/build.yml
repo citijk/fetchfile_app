@@ -47,7 +47,7 @@ jobs:
 
       - name: Build APK
         run: |
-            flet build --compile-packages --compile-app --cleanup-app apk # --android-signing-key-store-password "${{ secrets.ANDROID_STORE_PASSWORD }}" --android-signing-key-password "${{ secrets.ANDROID_KEY_PASSWORD }}"
+            flet build --compile-packages --compile-app --cleanup-app --arch armeabi-v7a apk # --android-signing-key-store-password "${{ secrets.ANDROID_STORE_PASSWORD }}" --android-signing-key-password "${{ secrets.ANDROID_KEY_PASSWORD }}"
             pwd
             md5sum upload-keystore.jks
             echo -n "${{ secrets.ANDROID_STORE_PASSWORD }}" | md5sum
