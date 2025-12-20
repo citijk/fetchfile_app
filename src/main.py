@@ -1012,7 +1012,12 @@ class VideoDownloader:
         self.page.horizontal_alignment = ft.CrossAxisAlignment.CENTER
 
         assets_path = os.getenv("FLET_ASSETS_DIR")
-        self.FFMPEG_PATH = os.path.join(assets_path, 'bin', 'ffmpeg')
+        if assets_path:
+            self.FFMPEG_PATH = os.path.join(assets_path, 'bin', 'ffmpeg')
+        else:
+            self.show_snackbar(f"not: {self.FFMPEG_PATH}", duration=10)
+            self.FFMPEG_PATH = 'assets/bin/ffmpeg'
+
         print(self.FFMPEG_PATH)
 
         # Настройка навигации
