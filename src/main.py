@@ -25,12 +25,13 @@ APP_NAME = "Video Downloader"
 
 temp_dir = os.getenv("FLET_APP_STORAGE_TEMP")
 data_dir = os.getenv("FLET_APP_STORAGE_DATA")
+assets_path = os.getenv("FLET_ASSETS_DIR")
 
 SETTINGS_FILE = os.path.join(data_dir, "settings.json")
 HISTORY_FILE = os.path.join(data_dir, "history.json")
 QUEUE_FILE = os.path.join(data_dir, "queue.json")
 
-FFMPEG_PATH = os.path.join(os.path.dirname(__file__), 'assets', 'bin', 'ffmpeg')
+FFMPEG_PATH = os.path.join(assets_path, 'bin', 'ffmpeg')
 
     # 1. Словарь соответствия: (Тип + Качество) -> Строка format для yt-dlp
 FORMAT_MAP = {
@@ -353,7 +354,7 @@ class VideoDownloader:
             return False
 
         if not os.path.exists(FFMPEG_PATH):
-            self.show_snackbar(f"not: {FFMPEG_PATH}")
+            self.show_snackbar(f"not: {FFMPEG_PATH}", duration=10)
             return False
 
         for item in self.queue:
@@ -433,7 +434,7 @@ class VideoDownloader:
         self.save_queue()
         self.refresh_queue_page()
 
-    def show_snackbar(self, message: str, color=None):
+    def show_snackbar(self, message: str, color=None, duration=None):
         #self.page.snackbar = ft.SnackBar(
         #    content=ft.Text(message),
         #    action="Закрыть",
@@ -446,6 +447,7 @@ class VideoDownloader:
             content=ft.Text(message, color),
             action="Закрыть",
             action_color=ft.Colors.BLUE,
+            duration=duration*1000,
         ))
         self.page.update()
 
