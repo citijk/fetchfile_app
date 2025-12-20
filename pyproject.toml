@@ -56,8 +56,8 @@ key_store = "upload-keystore.jks"
 key_alias = "upload"
 
 
-[tool.flet.android]
-split_per_abi = true
+#[tool.flet.android]
+#split_per_abi = true
 
 #signing.key_alias = "./upload-keystore.jks"
 #signing.key_alias = "/__w/fetchfile_app/fetchfile_app/upload-keystore.jks"

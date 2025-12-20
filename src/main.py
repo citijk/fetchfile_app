@@ -25,13 +25,12 @@ APP_NAME = "Video Downloader"
 
 temp_dir = os.getenv("FLET_APP_STORAGE_TEMP")
 data_dir = os.getenv("FLET_APP_STORAGE_DATA")
-assets_path = os.getenv("FLET_ASSETS_DIR")
 
 SETTINGS_FILE = os.path.join(data_dir, "settings.json")
 HISTORY_FILE = os.path.join(data_dir, "history.json")
 QUEUE_FILE = os.path.join(data_dir, "queue.json")
 
-FFMPEG_PATH = os.path.join(assets_path, 'bin', 'ffmpeg')
+
 
     # 1. Словарь соответствия: (Тип + Качество) -> Строка format для yt-dlp
 FORMAT_MAP = {
@@ -353,8 +352,8 @@ class VideoDownloader:
             self.show_snackbar("Укажите папку для сохранения в настройках!")
             return False
 
-        if not os.path.exists(FFMPEG_PATH):
-            self.show_snackbar(f"not: {FFMPEG_PATH}", duration=10)
+        if not os.path.exists(self.FFMPEG_PATH):
+            self.show_snackbar(f"not: {self.FFMPEG_PATH}", duration=10)
             return False
 
         for item in self.queue:
@@ -367,7 +366,7 @@ class VideoDownloader:
             'format': FORMAT_MAP[format_id], #format_id,
             'outtmpl': os.path.join(self.settings["download_path"], '%(title)s_%(format_id)s.%(ext)s'),
             'progress_hooks': [self.progress_hook(uid)],
-            'ffmpeg_location': FFMPEG_PATH,
+            'ffmpeg_location': self.FFMPEG_PATH,
         }
 
         if "mp3" in format_id:
@@ -1011,6 +1010,10 @@ class VideoDownloader:
         self.page.title = APP_NAME
         self.page.vertical_alignment = ft.MainAxisAlignment.CENTER
         self.page.horizontal_alignment = ft.CrossAxisAlignment.CENTER
+
+        assets_path = os.getenv("FLET_ASSETS_DIR")
+        self.FFMPEG_PATH = os.path.join(assets_path, 'bin', 'ffmpeg')
+        print(self.FFMPEG_PATH)
 
         # Настройка навигации
         def route_change(route):
