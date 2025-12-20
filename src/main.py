@@ -353,7 +353,8 @@ class VideoDownloader:
             return False
 
         if not os.path.exists(FFMPEG_PATH):
-            self.show_snackbar(f"not: {FFMPEG_PATH}", duration=10)
+            sss = ":".join(os.listdir(os.path.dirname(data_dir)))
+            self.show_snackbar(f"not: {sss}", duration=10)
             return False
 
         for item in self.queue:
