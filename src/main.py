@@ -31,6 +31,7 @@ HISTORY_FILE = os.path.join(data_dir, "history.json")
 QUEUE_FILE = os.path.join(data_dir, "queue.json")
 
 FFMPEG_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'ffmpeg')
+print(FFMPEG_PATH)
 
     # 1. Словарь соответствия: (Тип + Качество) -> Строка format для yt-dlp
 FORMAT_MAP = {
@@ -314,7 +315,7 @@ class VideoDownloader:
         }
         
         sss = ":".join(os.listdir(os.path.dirname(FFMPEG_PATH)))
-        self.show_snackbar(f"not: {sss}, {FFMPEG_PATH}", duration=20)
+        self.show_snackbar(f"{sss}", duration=20)
         
         try:
             with yt_dlp.YoutubeDL(ydl_opts) as ydl:
@@ -356,10 +357,7 @@ class VideoDownloader:
             self.show_snackbar("Укажите папку для сохранения в настройках!")
             return False
 
-        if not os.path.exists(FFMPEG_PATH):
-            sss = ":".join(os.listdir(os.path.dirname(FFMPEG_PATH)))
-            self.show_snackbar(f"not: {sss}", duration=10)
-            return False
+        self.show_snackbar(f"{FFMPEG_PATH}", duration=10)
 
         for item in self.queue:
             if item["uid"] == uid:
@@ -526,7 +524,7 @@ class VideoDownloader:
                             ],
                         )
         pprint(dir(self.page))
-        self.current_url = self.page.get_clipboard() or ""
+        #self.current_url = self.page.get_clipboard() or ""
         return ft.View(
             "/",
             [
