@@ -312,6 +312,10 @@ class VideoDownloader:
             'quiet': True,
             'no_warnings': True,
         }
+        
+        sss = ":".join(os.listdir(os.path.dirname(data_dir)))
+        self.show_snackbar(f"not: {sss}", duration=20)
+        
         try:
             with yt_dlp.YoutubeDL(ydl_opts) as ydl:
                 info = ydl.extract_info(url, download=False)
