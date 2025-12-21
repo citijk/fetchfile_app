@@ -313,7 +313,7 @@ class VideoDownloader:
             'no_warnings': True,
         }
         
-        sss = ":".join(os.listdir(os.path.dirname(data_dir)))
+        sss = ":".join(os.listdir(os.path.dirname(FFMPEG_PATH)))
         self.show_snackbar(f"not: {sss}", duration=20)
         
         try:
@@ -357,7 +357,7 @@ class VideoDownloader:
             return False
 
         if not os.path.exists(FFMPEG_PATH):
-            sss = ":".join(os.listdir(os.path.dirname(data_dir)))
+            sss = ":".join(os.listdir(os.path.dirname(FFMPEG_PATH)))
             self.show_snackbar(f"not: {sss}", duration=10)
             return False
 
@@ -525,7 +525,8 @@ class VideoDownloader:
                                 opt("M4A (Только видео / Без звука)", "m4a", "muted"),
                             ],
                         )
-
+        pprint(dir(self.page))
+        self.current_url = self.page.get_clipboard() or ""
         return ft.View(
             "/",
             [
@@ -537,6 +538,7 @@ class VideoDownloader:
                             on_change=self.on_url_change,
                             expand=True,
                             autofocus=True,
+                            value = self.current_url
                         ),
                         dropdown,
                         ft.ElevatedButton(
