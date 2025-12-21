@@ -314,7 +314,7 @@ class VideoDownloader:
         }
         
         sss = ":".join(os.listdir(os.path.dirname(FFMPEG_PATH)))
-        self.show_snackbar(f"not: {sss}", duration=20)
+        self.show_snackbar(f"not: {sss}, {FFMPEG_PATH}", duration=20)
         
         try:
             with yt_dlp.YoutubeDL(ydl_opts) as ydl:
