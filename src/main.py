@@ -32,6 +32,7 @@ QUEUE_FILE = os.path.join(data_dir, "queue.json")
 
 FFMPEG_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)))
 print(FFMPEG_PATH)
+# armeabi-v7a
 
     # 1. Словарь соответствия: (Тип + Качество) -> Строка format для yt-dlp
 FORMAT_MAP = {
@@ -314,7 +315,7 @@ class VideoDownloader:
             'no_warnings': True,
         }
         
-        sss = ":".join(os.listdir(os.path.dirname(FFMPEG_PATH)))
+        sss = ":".join(os.listdir(FFMPEG_PATH))
         self.show_snackbar(f"{sss}", duration=20)
         
         try:
