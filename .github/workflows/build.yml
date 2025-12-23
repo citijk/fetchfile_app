@@ -55,10 +55,11 @@ jobs:
             echo "pppp::: ${{ secrets.ANDROID_STORE_PASSWORD }}"
             ls build/
             ls build/*
-            ls build/*/*
+            #ls build/*/*
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: fetchfile.apk
-          path: build/apk/
+          name: fetchfile
+          path: build/apk/*
+          compression-level: 0
