@@ -52,7 +52,7 @@ jobs:
           cd ffmpeg-android-maker
           #./init-ffmpeg.sh  # инициализация (скачивание исходников)
           #./build-ffmpeg.sh # сборка ffmpeg и ffprobe
-          ls /opt/android-sdk-linux/
+          ls /opt/android-sdk-linux/*/
           
           # После сборки бинарники будут в директории:
           # ffmpeg-android-maker/ffmpeg/build/ffmpeg-android-x86_64/ffmpeg (пример)
@@ -64,4 +64,13 @@ jobs:
           
           #cd ..
 
+      - name: Build APK
+        run: |
+          flet build apk --arch armeabi-v7a --compile-packages --compile-app --cleanup-app
 
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: fetchfile
+          path: build/apk/*
+          compression-level: 0
