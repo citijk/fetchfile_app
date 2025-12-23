@@ -51,8 +51,8 @@ jobs:
         run: |
           git clone https://github.com/Javernaut/ffmpeg-android-maker.git
           cd ffmpeg-android-maker
-          #./ffmpeg-android-maker.sh > /dev/null 2>&1
-          ./ffmpeg-android-maker.sh --target-abis "armeabi-v7a" > /dev/null 2>&1;
+          #./ffmpeg-android-maker.sh ‑all‑free ‑all‑gpl > /dev/null 2>&1
+          ./ffmpeg-android-maker.sh --target-abis "armeabi-v7a" ‑all‑free ‑all‑gpl > /dev/null 2>&1;
           ls build
           ls build/*/
           cp -r build/ffmpeg/armeabi-v7a ../src/ffmpeg
