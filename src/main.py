@@ -5,6 +5,7 @@ import hashlib
 import random
 import threading
 import base64
+import sys
 
 import flet as ft
 import flet_video as ftv
@@ -30,7 +31,12 @@ SETTINGS_FILE = os.path.join(data_dir, "settings.json")
 HISTORY_FILE = os.path.join(data_dir, "history.json")
 QUEUE_FILE = os.path.join(data_dir, "queue.json")
 
-FFMPEG_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)))
+FFMPEG_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'ffmpeg')
+sys.path.append(FFMPEG_PATH)
+
+yt_dlp.postprocessor.FFmpegPostProcessor._ffmpeg_location.set(FFMPEG_PATH)
+
+
 print(FFMPEG_PATH)
 # armeabi-v7a
 
@@ -315,7 +321,7 @@ class VideoDownloader:
             'no_warnings': True,
         }
         
-        sss = ":".join(os.listdir(FFMPEG_PATH))
+        sss = ":".join(os.listdir(os.path.dirname(FFMPEG_PATH)))
         self.show_snackbar(f"{sss}", duration=20)
         
         try:

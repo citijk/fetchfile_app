@@ -1,6 +1,6 @@
 [project]
 name = "fetchfile"
-version = "2.1.14"
+version = "2.1.15"
 description = ""
 readme = "README.md"
 requires-python = ">=3.9"
