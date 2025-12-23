@@ -51,36 +51,25 @@ jobs:
         run: |
           git clone https://github.com/Javernaut/ffmpeg-android-maker.git
           cd ffmpeg-android-maker
-          ./ffmpeg-android-maker.sh --target-abis "armeabi-v7a" > /dev/null;
+          ./ffmpeg-android-maker.sh &>/dev/null
+          #./ffmpeg-android-maker.sh --target-abis "armeabi-v7a" > /dev/null 2>&1;
           ls build
           ls build/*/
+          cp -r build/ffmpeg/armeabi-v7a/bin ../src/
+
+#      - name: Upload artifacts
+#        uses: actions/upload-artifact@v4
+#        with:
+#          name: ffmpeg
+#          path: ./ffmpeg-android-maker/build/
+
+      - name: Build APK
+        run: |
+          flet build apk --arch armeabi-v7a --compile-packages --compile-app --cleanup-app
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: ffmpeg
-          path: ./ffmpeg-android-maker/build/
-
-          #./init-ffmpeg.sh  # инициализация (скачивание исходников)
-          #./build-ffmpeg.sh # сборка ffmpeg и ffprobe
-          
-          # После сборки бинарники будут в директории:
-          # ffmpeg-android-maker/ffmpeg/build/ffmpeg-android-x86_64/ffmpeg (пример)
-          
-          # Копируем ffmpeg и ffprobe в нужное место проекта (пример, изменить под свой путь)
-          #mkdir -p ../android/app/src/main/jniLibs/arm64-v8a/
-          #cp ffmpeg/build/ffmpeg-android-arm64-v8a/ffmpeg ../android/app/src/main/jniLibs/arm64-v8a/
-          #cp ffmpeg/build/ffmpeg-android-arm64-v8a/ffprobe ../android/app/src/main/jniLibs/arm64-v8a/
-          
-          #cd ..
-
-#      - name: Build APK
-#        run: |
-#          flet build apk --arch armeabi-v7a --compile-packages --compile-app --cleanup-app
-#
-#      - name: Upload artifacts
-#        uses: actions/upload-artifact@v4
-#        with:
-#          name: fetchfile
-#          path: build/apk/*
-#          compression-level: 0
+          name: fetchfile
+          path: build/apk/*
+          compression-level: 0
