@@ -20,7 +20,7 @@ jobs:
       LANGUAGE: en_US:en
       ANDROID_SDK_ROOT: /opt/android-sdk-linux
       ANDROID_SDK_HOME: /opt/android-sdk-linux
-      #ANDROID_NDK_HOME: /opt/android-sdk-linux/ndk/${VERSION_NDK}
+      ANDROID_NDK_HOME: /opt/android-ndk-linux
       ANDROID_SDK_TOOLS_VERSION: 11076708
       ANDROID_PLATFORM_VERSION: 35
       #VERSION_NDK: 
@@ -44,6 +44,7 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y chromium-chromedriver python3-pip openjdk-17-jdk zenity unzip
           yes | sdkmanager --licenses || true
+          sdkmanager "ndk;23.1.7779620"
           pip install --no-cache-dir --break-system-packages "flet[all]==0.28.3"
 
       - name: Build FFmpeg and FFprobe with ffmpeg-android-maker
@@ -53,6 +54,7 @@ jobs:
           #./init-ffmpeg.sh  # инициализация (скачивание исходников)
           #./build-ffmpeg.sh # сборка ffmpeg и ffprobe
           ls /opt/
+          ls /opt/android-ndk-linux/*/
           
           # После сборки бинарники будут в директории:
           # ffmpeg-android-maker/ffmpeg/build/ffmpeg-android-x86_64/ffmpeg (пример)
