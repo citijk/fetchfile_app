@@ -54,7 +54,7 @@ jobs:
           #./init-ffmpeg.sh  # инициализация (скачивание исходников)
           #./build-ffmpeg.sh # сборка ffmpeg и ffprobe
           ls /opt/
-          ls /opt/android-ndk-linux/*/
+          ls /opt/android-sdk-linux/*/
           
           # После сборки бинарники будут в директории:
           # ffmpeg-android-maker/ffmpeg/build/ffmpeg-android-x86_64/ffmpeg (пример)
