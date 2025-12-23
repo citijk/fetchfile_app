@@ -31,8 +31,8 @@ SETTINGS_FILE = os.path.join(data_dir, "settings.json")
 HISTORY_FILE = os.path.join(data_dir, "history.json")
 QUEUE_FILE = os.path.join(data_dir, "queue.json")
 
-FFMPEG_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "bin")
-sys.path.append(FFMPEG_PATH)
+FFMPEG_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "ffmpeg", "bin")
+#sys.path.append(FFMPEG_PATH)
 
 yt_dlp.postprocessor.FFmpegPostProcessor._ffmpeg_location.set(FFMPEG_PATH)
 

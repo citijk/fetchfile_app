@@ -47,15 +47,15 @@ jobs:
           sdkmanager "ndk;23.1.7779620"
           pip install --no-cache-dir --break-system-packages "flet[all]==0.28.3"
 
-#      - name: Build FFmpeg and FFprobe with ffmpeg-android-maker
-#        run: |
-#          git clone https://github.com/Javernaut/ffmpeg-android-maker.git
-#          cd ffmpeg-android-maker
-#          #./ffmpeg-android-maker.sh > /dev/null 2>&1
-#          ./ffmpeg-android-maker.sh --target-abis "armeabi-v7a" > /dev/null 2>&1;
-#          ls build
-#          ls build/*/
-#          cp -r build/ffmpeg/armeabi-v7a/bin ../src/
+      - name: Build FFmpeg and FFprobe with ffmpeg-android-maker
+        run: |
+          git clone https://github.com/Javernaut/ffmpeg-android-maker.git
+          cd ffmpeg-android-maker
+          #./ffmpeg-android-maker.sh > /dev/null 2>&1
+          ./ffmpeg-android-maker.sh --target-abis "armeabi-v7a" > /dev/null 2>&1;
+          ls build
+          ls build/*/
+          cp -r build/ffmpeg/armeabi-v7a ../src/ffmpeg
 
 #      - name: Upload artifacts
 #        uses: actions/upload-artifact@v4
