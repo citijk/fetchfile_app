@@ -20,10 +20,10 @@ jobs:
       LANGUAGE: en_US:en
       ANDROID_SDK_ROOT: /opt/android-sdk-linux
       ANDROID_SDK_HOME: /opt/android-sdk-linux
-      ANDROID_NDK_HOME: /opt/android-ndk-linux
+      ANDROID_NDK_HOME: /opt/android-sdk-linux/ndk/23.1.7779620
       ANDROID_SDK_TOOLS_VERSION: 11076708
       ANDROID_PLATFORM_VERSION: 35
-      #VERSION_NDK: 
+      VERSION_NDK: 23.1.7779620
       VERSION_SDK: 11076708
       ANDROID_BUILD_TOOLS_VERSION: 35.0.0
       FLUTTER_HOME: /usr/local/flutter
@@ -51,10 +51,11 @@ jobs:
         run: |
           git clone https://github.com/Javernaut/ffmpeg-android-maker.git
           cd ffmpeg-android-maker
+          ./ffmpeg-android-maker.sh --target-abis "armeabi-v7a"
+          ls build
+          ls build/*/
           #./init-ffmpeg.sh  # инициализация (скачивание исходников)
           #./build-ffmpeg.sh # сборка ffmpeg и ffprobe
-          ls /opt/
-          ls /opt/android-sdk-linux/*/
           
           # После сборки бинарники будут в директории:
           # ffmpeg-android-maker/ffmpeg/build/ffmpeg-android-x86_64/ffmpeg (пример)
