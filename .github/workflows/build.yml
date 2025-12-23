@@ -51,7 +51,7 @@ jobs:
         run: |
           git clone https://github.com/Javernaut/ffmpeg-android-maker.git
           cd ffmpeg-android-maker
-          ./ffmpeg-android-maker.sh --target-abis "armeabi-v7a"
+          ./ffmpeg-android-maker.sh --target-abis "armeabi-v7a" > /dev/null;
           ls build
           ls build/*/
 
@@ -59,7 +59,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: ffmpeg
-          path: build
+          path: ./ffmpeg-android-maker/build/
 
           #./init-ffmpeg.sh  # инициализация (скачивание исходников)
           #./build-ffmpeg.sh # сборка ffmpeg и ffprobe
