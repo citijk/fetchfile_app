@@ -57,8 +57,7 @@ jobs:
           ls -la build
           ls -la build/*/
           ls -la build/*/*
-          mkdir ../src/ffmpeg
-          cp -r build/ffmpeg/armeabi-v7a/* ../src/ffmpeg/
+          cp -r build/ffmpeg/armeabi-v7a/bin/* ../src/
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
@@ -68,8 +67,7 @@ jobs:
 
       - name: Build APK
         run: |
-          ls src/ffmpeg/
-          ls src/ffmpeg/*/*
+          ls -la src/
           flet build apk --arch armeabi-v7a --compile-packages --compile-app --cleanup-app
 
       - name: Upload artifacts
