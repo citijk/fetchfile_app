@@ -31,10 +31,10 @@ SETTINGS_FILE = os.path.join(data_dir, "settings.json")
 HISTORY_FILE = os.path.join(data_dir, "history.json")
 QUEUE_FILE = os.path.join(data_dir, "queue.json")
 
-FFMPEG_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "ffmpeg", "bin")
+FFMPEG_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)))
 #sys.path.append(FFMPEG_PATH)
 
-yt_dlp.postprocessor.FFmpegPostProcessor._ffmpeg_location.set(FFMPEG_PATH)
+yt_dlp.postprocessor.FFmpegPostProcessor._ffmpeg_location.set(os.path.join(FFMPEG_PATH, "ffmpeg", "bin"))
 
 
 print(FFMPEG_PATH)
@@ -321,11 +321,11 @@ class VideoDownloader:
             'no_warnings': True,
         }
         
-        if not os.path.exists(FFMPEG_PATH):
-            self.show_snackbar(f"not {FFMPEG_PATH}", duration=20)
-        else:
-            sss = ":".join(os.listdir(FFMPEG_PATH))
-            self.show_snackbar(f"{sss}", duration=20)
+        #if not os.path.exists(FFMPEG_PATH):
+        #    self.show_snackbar(f"not {FFMPEG_PATH}", duration=20)
+        #else:
+        sss = ":".join(os.listdir(FFMPEG_PATH))
+        self.show_snackbar(f"{sss}", duration=20)
         
         try:
             with yt_dlp.YoutubeDL(ydl_opts) as ydl:
@@ -379,7 +379,7 @@ class VideoDownloader:
             'format': FORMAT_MAP[format_id], #format_id,
             'outtmpl': os.path.join(self.settings["download_path"], '%(title)s_%(format_id)s.%(ext)s'),
             'progress_hooks': [self.progress_hook(uid)],
-            'ffmpeg_location': FFMPEG_PATH,
+            #'ffmpeg_location': FFMPEG_PATH,
         }
 
         if "mp3" in format_id:
