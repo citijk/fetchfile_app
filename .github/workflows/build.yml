@@ -53,11 +53,11 @@ jobs:
           cd ffmpeg-android-maker
           #./ffmpeg-android-maker.sh ‑all‑free ‑all‑gpl > /dev/null 2>&1
           ./ffmpeg-android-maker.sh --target-abis "armeabi-v7a" ‑all‑free ‑all‑gpl > /dev/null 2>&1;
-          ls build
-          ls build/*/
-          ls build/*/*
+          ls -la build
+          ls -la build/*/
+          ls -la build/*/*
           mkdir ../src/ffmpeg
-          cp -r build/armeabi-v7a/* ../src/ffmpeg/
+          cp -r build/ffmpeg/armeabi-v7a/* ../src/ffmpeg/
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4

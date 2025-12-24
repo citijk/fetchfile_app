@@ -321,8 +321,11 @@ class VideoDownloader:
             'no_warnings': True,
         }
         
-        sss = ":".join(os.listdir(FFMPEG_PATH))
-        self.show_snackbar(f"{sss}", duration=20)
+        if not os.path.exists(FFMPEG_PATH):
+            self.show_snackbar(f"not {FFMPEG_PATH}", duration=20)
+        else:
+            sss = ":".join(os.listdir(FFMPEG_PATH))
+            self.show_snackbar(f"{sss}", duration=20)
         
         try:
             with yt_dlp.YoutubeDL(ydl_opts) as ydl:
