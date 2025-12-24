@@ -68,6 +68,8 @@ jobs:
 
       - name: Build APK
         run: |
+          ls src/ffmpeg/
+          ls src/ffmpeg/*/*
           flet build apk --arch armeabi-v7a --compile-packages --compile-app --cleanup-app
 
       - name: Upload artifacts
