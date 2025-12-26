@@ -58,17 +58,20 @@ jobs:
           ls -la build/*/
           ls -la build/*/*
           cp -r build/ffmpeg/armeabi-v7a/bin/* ../src/
+          cd ../
+          rm -rf ffmpeg-android-maker
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
           name: ffmpeg
-          path: ./ffmpeg-android-maker/build/
+          path: ./src/bin/
 
       - name: Build APK
         run: |
-          ls -la src/
           flet build apk --arch armeabi-v7a --compile-packages --compile-app --cleanup-app
+          ls -la src/
+          du -hs src/*
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
