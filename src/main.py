@@ -34,7 +34,7 @@ QUEUE_FILE = os.path.join(data_dir, "queue.json")
 FFMPEG_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)))
 #sys.path.append(FFMPEG_PATH)
 
-yt_dlp.postprocessor.FFmpegPostProcessor._ffmpeg_location.set(os.path.join(FFMPEG_PATH))
+#yt_dlp.postprocessor.FFmpegPostProcessor._ffmpeg_location.set(os.path.join(FFMPEG_PATH))
 
 
 print(FFMPEG_PATH)
@@ -379,7 +379,7 @@ class VideoDownloader:
             'format': FORMAT_MAP[format_id], #format_id,
             'outtmpl': os.path.join(self.settings["download_path"], '%(title)s_%(format_id)s.%(ext)s'),
             'progress_hooks': [self.progress_hook(uid)],
-            'ffmpeg_location': os.path.join(FFMPEG_PATH, 'ffmpeg'),
+            'ffmpeg_location': os.path.join(FFMPEG_PATH),
         }
 
         if "mp3" in format_id:
