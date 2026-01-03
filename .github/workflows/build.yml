@@ -53,12 +53,12 @@ jobs:
           cd ffmpeg-android-maker
           #sed -ie 's/--enable-shared/--disable-shared/g; s/--disable-static/--enable-static/g; s/--extra-ldflags="$EXTRA_LDFLAGS"/--extra-ldflags="$EXTRA_LDFLAGS -static"/g' scripts/ffmpeg/build.sh
           #./ffmpeg-android-maker.sh ‑all‑free ‑all‑gpl > /dev/null 2>&1
-          ./ffmpeg-android-maker.sh --abis="armeabi-v7a" --enable-libmp3lame --enable-libvorbis --enable-libopus --enable-libx264 --enable-libvpx # > /dev/null 2>&1;
+          ./ffmpeg-android-maker.sh -abis="armeabi-v7a" --enable-libmp3lame --enable-libopus --enable-libx264 > /dev/null 2>&1;
           ls -la build
           ls -la build/*/
           ls -la build/*/*
-          cp build/bin/armeabi-v7a/ffmpeg ../src/
-          cp build/bin/armeabi-v7a/ffprobe ../src/
+          cp build/ffmpeg/armeabi-v7a/bin/ffmpeg ../src/
+          cp build/ffmpeg/armeabi-v7a/bin/ffprobe ../src/
 
           #cp -r build/ffmpeg/armeabi-v7a/* ../src/
           #cp -r build/ffmpeg/armeabi-v7a/bin/* ../src/
