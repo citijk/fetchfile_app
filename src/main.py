@@ -321,7 +321,7 @@ class VideoDownloader:
             'no_warnings': True,
         }
         
-        if not os.path.exists(os.path.join(FFMPEG_PATH, "bin")):
+        if not os.path.exists(os.path.join(FFMPEG_PATH, "bin", "ffmpeg")):
             sss = ":".join(os.listdir(FFMPEG_PATH))
             self.show_snackbar(f"not {sss}", duration=20)
         else:

@@ -57,8 +57,9 @@ jobs:
           ls -la build
           ls -la build/*/
           ls -la build/*/*
-          #cp build/ffmpeg/armeabi-v7a/bin/ffmpeg ../src/
-          cp build/ffmpeg/armeabi-v7a/* ../src/
+          cp -r build/ffmpeg/armeabi-v7a/* ../src/
+          #cp -r build/ffmpeg/armeabi-v7a/bin/ffmpeg ../src/
+          #cp -r build/ffmpeg/armeabi-v7a/bin/ffprobe ../src/
 
           #cp -r build/ffmpeg/armeabi-v7a/* ../src/
           #cp -r build/ffmpeg/armeabi-v7a/bin/* ../src/
