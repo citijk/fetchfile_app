@@ -321,8 +321,9 @@ class VideoDownloader:
             'no_warnings': True,
         }
         
-        if not os.path.exists(os.path.join(FFMPEG_PATH, 'ffmpeg')):
-            self.show_snackbar(f"not {FFMPEG_PATH}", duration=20)
+        if not os.path.exists(os.path.join(FFMPEG_PATH)):
+            sss = ":".join(os.listdir(FFMPEG_PATH))
+            self.show_snackbar(f"not {sss}", duration=20)
         else:
             sss = ":".join(os.listdir(FFMPEG_PATH))
             self.show_snackbar(f"{sss}", duration=20)
@@ -379,7 +380,7 @@ class VideoDownloader:
             'format': FORMAT_MAP[format_id], #format_id,
             'outtmpl': os.path.join(self.settings["download_path"], '%(title)s_%(format_id)s.%(ext)s'),
             'progress_hooks': [self.progress_hook(uid)],
-            'ffmpeg_location': os.path.join(FFMPEG_PATH),
+            'ffmpeg_location': os.path.join(FFMPEG_PATH, "bin"),
         }
 
         if "mp3" in format_id:

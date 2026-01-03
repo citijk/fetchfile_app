@@ -51,17 +51,18 @@ jobs:
         run: |
           git clone https://github.com/Javernaut/ffmpeg-android-maker.git
           cd ffmpeg-android-maker
-          sed -ie 's/--enable-shared/--disable-shared/g; s/--disable-static/--enable-static/g; s/--extra-ldflags="$EXTRA_LDFLAGS"/--extra-ldflags="$EXTRA_LDFLAGS -static"/g' scripts/ffmpeg/build.sh
+          #sed -ie 's/--enable-shared/--disable-shared/g; s/--disable-static/--enable-static/g; s/--extra-ldflags="$EXTRA_LDFLAGS"/--extra-ldflags="$EXTRA_LDFLAGS -static"/g' scripts/ffmpeg/build.sh
           #./ffmpeg-android-maker.sh ‑all‑free ‑all‑gpl > /dev/null 2>&1
           ./ffmpeg-android-maker.sh --target-abis "armeabi-v7a" ‑all‑free ‑all‑gpl > /dev/null 2>&1;
           ls -la build
           ls -la build/*/
           ls -la build/*/*
-          cp -r build/ffmpeg/armeabi-v7a/bin/* ../src/
+          cp -r build/ffmpeg/armeabi-v7a/* ../src/
+          #cp -r build/ffmpeg/armeabi-v7a/bin/* ../src/
           cd ../
           ls -la .
           rm -rf ffmpeg-android-maker
-          chmod +x src/ff*
+          chmod +x src/bin/ff*
 
 #      - name: Upload artifacts
 #        uses: actions/upload-artifact@v4
