@@ -20,10 +20,10 @@ jobs:
       LANGUAGE: en_US:en
       ANDROID_SDK_ROOT: /opt/android-sdk-linux
       ANDROID_SDK_HOME: /opt/android-sdk-linux
-      ANDROID_NDK_HOME: /opt/android-sdk-linux/ndk/23.1.7779620
+      ANDROID_NDK_HOME: /opt/android-sdk-linux/ndk/27.0.12077973
       ANDROID_SDK_TOOLS_VERSION: 11076708
       ANDROID_PLATFORM_VERSION: 35
-      VERSION_NDK: 23.1.7779620
+      VERSION_NDK: 27.0.12077973
       VERSION_SDK: 11076708
       ANDROID_BUILD_TOOLS_VERSION: 35.0.0
       FLUTTER_HOME: /usr/local/flutter
@@ -44,7 +44,7 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y chromium-chromedriver python3-pip openjdk-17-jdk zenity unzip
           yes | sdkmanager --licenses || true
-          sdkmanager "ndk;23.1.7779620"
+          sdkmanager "ndk;27.0.12077973"
           pip install --no-cache-dir --break-system-packages "flet[all]==0.28.3"
 
       - name: Build FFmpeg and FFprobe with ffmpeg-android-maker
@@ -53,7 +53,7 @@ jobs:
           cd ffmpeg-android-maker
           #sed -ie 's/--enable-shared/--disable-shared/g; s/--disable-static/--enable-static/g; s/--extra-ldflags="$EXTRA_LDFLAGS"/--extra-ldflags="$EXTRA_LDFLAGS -static"/g' scripts/ffmpeg/build.sh
           #./ffmpeg-android-maker.sh ‑all‑free ‑all‑gpl > /dev/null 2>&1
-          ./ffmpeg-android-maker.sh --target-abis "armeabi-v7a" ‑all‑free ‑all‑gpl > /dev/null 2>&1;
+          ./ffmpeg-android-maker.sh --abis="armeabi-v7a" --enable-libmp3lame --enable-libvorbis --enable-libopus --enable-libx264 --enable-libvpx > /dev/null 2>&1;
           ls -la build
           ls -la build/*/
           ls -la build/*/*
@@ -62,7 +62,7 @@ jobs:
           cd ../
           ls -la .
           rm -rf ffmpeg-android-maker
-          chmod +x src/bin/ff*
+          #chmod +x src/bin/ff*
 
 #      - name: Upload artifacts
 #        uses: actions/upload-artifact@v4
